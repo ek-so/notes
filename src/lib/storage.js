@@ -1,5 +1,6 @@
 const TOKEN_KEY = 'brain_gh_token'
 const REPO_KEY = 'brain_gh_repo'
+const THEME_KEY = 'folio_theme'
 const DRAFT_PREFIX = 'folio_draft_'
 
 export const storage = {
@@ -20,6 +21,12 @@ export const storage = {
   },
   clearRepo: () => {
     try { localStorage.removeItem(REPO_KEY) } catch {}
+  },
+  getTheme: () => {
+    try { return localStorage.getItem(THEME_KEY) } catch { return null }
+  },
+  setTheme: (theme) => {
+    try { localStorage.setItem(THEME_KEY, theme) } catch {}
   },
 }
 

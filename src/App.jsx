@@ -6,6 +6,16 @@ import Editor from './components/Editor.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
 import { init, setRepo, getUser, getFile, saveFile } from './lib/github.js'
 import { storage, drafts } from './lib/storage.js'
+
+function getEffectiveTheme() {
+  const saved = storage.getTheme()
+  if (saved) return saved
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme)
+}
 import { Button } from './components/ui/button.jsx'
 import { cn } from '@/lib/utils.js'
 
@@ -19,6 +29,18 @@ export default function App() {
   const [draftCount, setDraftCount] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const [syncState, setSyncState] = useState('idle') // idle | done | error
+  const [theme, setTheme] = useState(() => {
+    const t = getEffectiveTheme()
+    applyTheme(t)
+    return t
+  })
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    applyTheme(next)
+    storage.setTheme(next)
+    setTheme(next)
+  }
 
   useEffect(() => {
     const token = storage.getToken()
@@ -141,6 +163,9 @@ export default function App() {
                     {draftCount}
                   </span>
                 )}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={toggleTheme} className="text-muted-foreground px-2">
+                {theme === 'dark' ? '☀️' : '🌙'}
               </Button>
               <Button variant="outline" size="sm" onClick={logout} className="text-muted-foreground">
                 Sign out
