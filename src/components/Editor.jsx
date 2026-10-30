@@ -3,11 +3,12 @@ import { getBlob } from '../lib/github.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { Button } from './ui/button.jsx'
+import { House } from 'lucide-react'
 import { cn } from '@/lib/utils.js'
 
 marked.setOptions({ breaks: true, gfm: true })
 
-export default function Editor({ path, entry, edited, onEdit, onClose }) {
+export default function Editor({ path, entry, edited, onEdit, onClose, onHome }) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('edit')
@@ -77,7 +78,11 @@ export default function Editor({ path, entry, edited, onEdit, onClose }) {
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
-        <Button variant="ghost" size="icon" onClick={onClose} className="text-lg shrink-0">←</Button>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="text-lg shrink-0">←</Button>
+        <div className="h-5 w-px bg-border shrink-0" />
+        <Button variant="ghost" size="icon" onClick={onHome} aria-label="Home" className="shrink-0">
+          <House className="size-5" />
+        </Button>
         <span className="flex-1 text-base font-semibold truncate min-w-0">
           {fileName}
           {changed && <span className="ml-1.5 text-primary text-xs">●</span>}

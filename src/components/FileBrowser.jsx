@@ -9,9 +9,7 @@ import { splitName } from '../lib/changes.js'
 
 const IMAGE = /^\.(png|jpe?g|gif|webp|svg|heic|avif|bmp)$/i
 
-export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
-  const [path, setPath] = useState('')
-  const [breadcrumbs, setBreadcrumbs] = useState([])
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
   const [renameItem, setRenameItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
   const [pull, setPull] = useState(0)
@@ -42,22 +40,18 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
   }
 
   function navigate(item) {
-    if (item.type === 'dir') {
-      setBreadcrumbs(prev => [...prev, { name: item.name, path }])
-      setPath(item.path)
-    } else {
+    if (item.type === 'dir') onNavigate(item.path)
+    else {
       onSelect(item.path)
     }
   }
 
   function goBack() {
-    const prev = breadcrumbs[breadcrumbs.length - 1]
-    setBreadcrumbs(b => b.slice(0, -1))
-    setPath(prev.path)
+    onNavigate(path.slice(0, Math.max(path.lastIndexOf('/'), 0)))
   }
 
   const repoName = repo ? repo.split('/')[1] : 'Notes'
-  const currentFolder = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : repoName
+  const currentFolder = path ? path.split('/').pop() : repoName
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -66,7 +60,7 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
         style={{ paddingTop: 'calc(0.75rem + var(--safe-top))' }}
       >
         <div className="flex items-center gap-1 min-w-0">
-          {breadcrumbs.length > 0 ? (
+          {path ? (
             <Button variant="ghost" size="icon" onClick={goBack} aria-label="Back" className="shrink-0">←</Button>
           ) : (
             <Button variant="ghost" size="icon" onClick={onMenu} aria-label="Menu" className="shrink-0">

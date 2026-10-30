@@ -31,6 +31,7 @@ export default function App() {
   const [repo, setRepoState] = useState(null)
   const [ready, setReady] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [folder, setFolder] = useState('')
   const [newFileFolder, setNewFileFolder] = useState(null)
   const [newFileKind, setNewFileKind] = useState('note')
   const [showNewFile, setShowNewFile] = useState(false)
@@ -219,6 +220,7 @@ export default function App() {
     setUser(null)
     setRepoState(null)
     setSelectedFile(null)
+    setFolder('')
   }
 
   if (!ready) {
@@ -243,10 +245,13 @@ export default function App() {
           onEdit={(content, original) =>
             updateChanges(ch => setEdit(ch, virtual[selectedFile], content, original))}
           onClose={() => setSelectedFile(null)}
+          onHome={() => { setFolder(''); setSelectedFile(null) }}
         />
       ) : (
         <>
           <FileBrowser
+            path={folder}
+            onNavigate={setFolder}
             listDir={dir => listDir(virtual, dir, changed)}
             loading={!remote && !remoteError}
             error={remoteError}
