@@ -15,12 +15,14 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const pullStart = useRef(null)
+  const listRef = useRef()
 
   const items = loading || error ? [] : listDir(path)
 
-  // Pull-to-refresh: drag down while scrolled to the top
+  // Pull-to-refresh: drag down while the list is scrolled to the top
   function onTouchStart(e) {
-    pullStart.current = e.currentTarget.scrollTop === 0 && !refreshing ? e.touches[0].clientY : null
+    const atTop = !listRef.current || listRef.current.scrollTop === 0
+    pullStart.current = atTop && !refreshing ? e.touches[0].clientY : null
   }
 
   function onTouchMove(e) {
@@ -53,12 +55,33 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
   const repoName = repo ? repo.split('/')[1] : 'Notes'
   const currentFolder = path ? path.split('/').pop() : repoName
 
+  const offset = refreshing ? 56 : pull
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div
+      className="relative flex flex-col h-full overflow-hidden"
+      style={{ paddingTop: 'var(--safe-top)' }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {offset > 0 && (
+        <div
+          className="absolute inset-x-0 flex items-center justify-center"
+          style={{ top: 'var(--safe-top)', height: offset }}
+        >
+          <div
+            className={cn('w-5 h-5 rounded-full border-2 border-border border-t-primary', refreshing && 'animate-spin')}
+            style={{ transform: refreshing ? undefined : `rotate(${pull * 4}deg)`, opacity: refreshing ? 1 : pull / 60 }}
+          />
+        </div>
+      )}
       <div
-        className="flex items-center justify-between px-4 pb-3 border-b border-border shrink-0"
-        style={{ paddingTop: 'calc(0.75rem + var(--safe-top))' }}
+        className={cn('relative flex flex-col flex-1 min-h-0 bg-background', !pull && 'transition-transform')}
+        style={{ transform: offset ? `translateY(${offset}px)` : undefined }}
       >
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-1 min-w-0">
           {path ? (
             <Button variant="ghost" size="icon" onClick={goBack} aria-label="Back" className="shrink-0">←</Button>
@@ -93,24 +116,10 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
       )}
       {!loading && (
         <ul
+          ref={listRef}
           className="flex-1 overflow-y-auto overscroll-y-contain py-2"
           style={{ WebkitOverflowScrolling: 'touch' }}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
         >
-          {(pull > 0 || refreshing) && (
-            <li
-              className={cn('flex justify-center items-end overflow-hidden', !pull && 'transition-[height]')}
-              style={{ height: refreshing ? 48 : pull }}
-            >
-              <div
-                className={cn('w-5 h-5 mb-3 rounded-full border-2 border-border border-t-primary',
-                  refreshing && 'animate-spin')}
-                style={{ transform: refreshing ? undefined : `rotate(${pull * 4}deg)`, opacity: refreshing ? 1 : pull / 60 }}
-              />
-            </li>
-          )}
           {items.map(item => {
             const [base, ext] = item.type === 'dir' ? [item.name, ''] : splitName(item.name)
             const openable = item.type === 'dir' || ext === '.md'
@@ -150,6 +159,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
           })}
         </ul>
       )}
+      </div>
 
       {renameItem && (
         <RenameModal
