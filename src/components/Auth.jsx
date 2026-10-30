@@ -41,7 +41,7 @@ export default function Auth({ onAuth }) {
           </button>
         </form>
         <a
-          href="https://github.com/settings/tokens/new?scopes=repo&description=Brain+Notes+App"
+          href="https://github.com/settings/tokens/new?scopes=repo&description=Folio"
           target="_blank"
           rel="noopener noreferrer"
           className="token-link"
