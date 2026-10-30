@@ -78,11 +78,11 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="text-lg shrink-0">←</Button>
-        <div className="h-5 w-px bg-border shrink-0" />
         <Button variant="ghost" size="icon" onClick={onHome} aria-label="Home" className="shrink-0">
           <House className="size-5" />
         </Button>
+        <div className="h-5 w-px bg-border shrink-0" />
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="text-lg shrink-0">←</Button>
         <span className="flex-1 text-base font-semibold truncate min-w-0">
           {fileName}
           {changed && <span className="ml-1.5 text-primary text-xs">●</span>}
