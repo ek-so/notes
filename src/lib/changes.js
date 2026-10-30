@@ -52,7 +52,7 @@ export function listDir(virtual, dir) {
     }
   }
   return [...dirs.values(), ...items]
-    .filter(i => !i.name.startsWith('.') && i.name !== 'Mobile notes')
+    .filter(i => !i.name.startsWith('.'))
     .sort((a, b) => {
       if (a.type === b.type) return a.name.localeCompare(b.name)
       return a.type === 'dir' ? -1 : 1

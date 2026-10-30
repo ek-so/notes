@@ -27,7 +27,7 @@ export async function listContents(path = '') {
   const items = Array.isArray(data) ? data : [data]
   return items
     .filter(i => i.type === 'dir' || i.name.endsWith('.md'))
-    .filter(i => !i.name.startsWith('.') && i.name !== 'Mobile notes')
+    .filter(i => !i.name.startsWith('.'))
     .sort((a, b) => {
       if (a.type === b.type) return a.name.localeCompare(b.name)
       return a.type === 'dir' ? -1 : 1
