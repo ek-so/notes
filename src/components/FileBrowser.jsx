@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { listContents } from '../lib/github.js'
 
-export default function FileBrowser({ onSelect, currentPath, onNewFile }) {
+export default function FileBrowser({ onSelect, currentPath, onNewFile, repo }) {
   const [path, setPath] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -39,9 +39,10 @@ export default function FileBrowser({ onSelect, currentPath, onNewFile }) {
     setPath(prev.path)
   }
 
+  const repoName = repo ? repo.split('/')[1] : 'Notes'
   const currentFolder = breadcrumbs.length > 0
     ? breadcrumbs[breadcrumbs.length - 1].name
-    : 'Brain'
+    : repoName
 
   return (
     <div className="file-browser">
