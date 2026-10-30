@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Plus, FileText, Folder, PencilSimple, Trash, DotsThree } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
@@ -10,37 +10,10 @@ import { splitName } from '../lib/changes.js'
 
 const IMAGE = /^\.(png|jpe?g|gif|webp|svg|heic|avif|bmp)$/i
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onMenu }) {
   const [renameItem, setRenameItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
-  const [pull, setPull] = useState(0)
-  const [refreshing, setRefreshing] = useState(false)
-  const pullStart = useRef(null)
-  const listRef = useRef()
-
   const items = loading || error ? [] : listDir(path)
-
-  // Pull-to-refresh: drag down while the list is scrolled to the top
-  function onTouchStart(e) {
-    const atTop = !listRef.current || listRef.current.scrollTop === 0
-    pullStart.current = atTop && !refreshing ? e.touches[0].clientY : null
-  }
-
-  function onTouchMove(e) {
-    if (pullStart.current === null) return
-    const dy = e.touches[0].clientY - pullStart.current
-    setPull(dy > 0 ? Math.min(dy / 2, 80) : 0)
-  }
-
-  async function onTouchEnd() {
-    pullStart.current = null
-    if (pull >= 60) {
-      setRefreshing(true)
-      setPull(0)
-      await onRefresh()
-      setRefreshing(false)
-    } else setPull(0)
-  }
 
   function navigate(item) {
     if (item.type === 'dir') onNavigate(item.path)
@@ -56,31 +29,8 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
   const repoName = repo ? repo.split('/')[1] : 'Notes'
   const currentFolder = path ? path.split('/').pop() : repoName
 
-  const offset = refreshing ? 56 : pull
-
   return (
-    <div
-      className="relative flex flex-col h-full overflow-hidden"
-      style={{ paddingTop: 'var(--safe-top)' }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {offset > 0 && (
-        <div
-          className="absolute inset-x-0 flex items-center justify-center"
-          style={{ top: 'var(--safe-top)', height: offset }}
-        >
-          <div
-            className={cn('w-5 h-5 rounded-full border-2 border-border border-t-primary', refreshing && 'animate-spin')}
-            style={{ transform: refreshing ? undefined : `rotate(${pull * 4}deg)`, opacity: refreshing ? 1 : pull / 60 }}
-          />
-        </div>
-      )}
-      <div
-        className={cn('relative flex flex-col flex-1 min-h-0 bg-background', !pull && 'transition-transform')}
-        style={{ transform: offset ? `translateY(${offset}px)` : undefined }}
-      >
+    <div className="flex flex-col flex-1 min-h-0">
       <Header
         title={currentFolder}
         onMenu={onMenu}
@@ -111,7 +61,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
       )}
       {!loading && (
         <ul
-          ref={listRef}
           className="flex-1 overflow-y-auto overscroll-y-contain py-2"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
@@ -154,7 +103,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
           })}
         </ul>
       )}
-      </div>
 
       {renameItem && (
         <RenameModal

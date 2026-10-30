@@ -3,6 +3,7 @@ import Auth from './components/Auth.jsx'
 import RepoSetup from './components/RepoSetup.jsx'
 import FileBrowser from './components/FileBrowser.jsx'
 import Editor from './components/Editor.jsx'
+import PullToRefresh from './components/PullToRefresh.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import { init, setRepo, getUser, getTree, getBlob, commitTree } from './lib/github.js'
@@ -30,7 +31,7 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [repo, setRepoState] = useState(null)
   const [ready, setReady] = useState(false)
-  const [selectedFile, setSelectedFile] = useState(null)
+  const [selectedFile, setSelectedFile] = useState(storage.getFile)
   const [folder, setFolder] = useState(storage.getFolder)
   const [newFileFolder, setNewFileFolder] = useState(null)
   const [newFileKind, setNewFileKind] = useState('note')
@@ -83,6 +84,7 @@ export default function App() {
   }, [])
 
   useEffect(() => { storage.setFolder(folder) }, [folder])
+  useEffect(() => { storage.setFile(selectedFile) }, [selectedFile])
 
   useEffect(() => {
     if (!user || !repo) return
@@ -151,6 +153,7 @@ export default function App() {
 
   async function sync() {
     if (syncing) return
+    window.dispatchEvent(new Event('folio:flush'))
     setSyncing(true)
     try {
       const latest = await pull()
@@ -238,20 +241,20 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full max-w-[680px] mx-auto bg-background">
-      {selectedFile && virtual[selectedFile] ? (
-        <Editor
-          key={selectedFile}
-          path={selectedFile}
-          entry={virtual[selectedFile]}
-          files={virtual}
-          edited={changes.edits[virtual[selectedFile].orig]}
-          onEdit={(content, original) =>
-            updateChanges(ch => setEdit(ch, virtual[selectedFile], content, original))}
-          onClose={() => setSelectedFile(null)}
-          onHome={() => { setFolder(''); setSelectedFile(null) }}
-        />
-      ) : (
-        <>
+      <PullToRefresh onRefresh={() => window.location.reload()}>
+        {selectedFile && virtual[selectedFile] ? (
+          <Editor
+            key={selectedFile}
+            path={selectedFile}
+            entry={virtual[selectedFile]}
+            files={virtual}
+            edited={changes.edits[virtual[selectedFile].orig]}
+            onEdit={(content, original) =>
+              updateChanges(ch => setEdit(ch, virtual[selectedFile], content, original))}
+            onClose={() => setSelectedFile(null)}
+            onHome={() => { setFolder(''); setSelectedFile(null) }}
+          />
+        ) : (
           <FileBrowser
             path={folder}
             onNavigate={setFolder}
@@ -260,53 +263,52 @@ export default function App() {
             error={remoteError}
             onRename={handleRename}
             onDelete={handleDelete}
-            onRefresh={() => window.location.reload()}
             onMenu={() => setMenuOpen(true)}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
             onNewFile={(f, kind) => { setNewFileFolder(f || ''); setNewFileKind(kind); setShowNewFile(true) }}
             repo={repo}
           />
-          <div
-            className="flex items-center justify-end px-4 py-3 border-t border-border bg-background shrink-0"
-            style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
-          >
-            <Button
-              onClick={sync}
-              disabled={syncing}
-              variant={syncState === 'error' ? 'destructive' : 'default'}
-              className="gap-2"
-            >
-              {syncState === 'done' ? <Check className="size-4" />
-                : syncState === 'error' ? <X className="size-4" />
-                : <ArrowsClockwise className={cn('size-4', syncing && 'animate-spin')} />}
-              {syncState === 'done' ? 'Synced' : syncState === 'error' ? 'Failed' : 'Sync'}
-              {changeCount > 0 && syncState === 'idle' && !syncing && (
-                <span className="bg-primary-foreground text-primary rounded-full text-[11px] min-w-5 h-5 px-1 flex items-center justify-center font-semibold">
-                  {changeCount}
-                </span>
-              )}
+        )}
+      </PullToRefresh>
+      <div
+        className="flex items-center justify-end px-4 py-3 border-t border-border bg-background shrink-0"
+        style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
+      >
+        <Button
+          onClick={sync}
+          disabled={syncing}
+          variant={syncState === 'error' ? 'destructive' : 'default'}
+          className="gap-2"
+        >
+          {syncState === 'done' ? <Check className="size-4" />
+            : syncState === 'error' ? <X className="size-4" />
+            : <ArrowsClockwise className={cn('size-4', syncing && 'animate-spin')} />}
+          {syncState === 'done' ? 'Synced' : syncState === 'error' ? 'Failed' : 'Sync'}
+          {changeCount > 0 && syncState === 'idle' && !syncing && (
+            <span className="bg-primary-foreground text-primary rounded-full text-[11px] min-w-5 h-5 px-1 flex items-center justify-center font-semibold">
+              {changeCount}
+            </span>
+          )}
+        </Button>
+      </div>
+
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
+          <SheetHeader>
+            <SheetTitle>@{user.login}</SheetTitle>
+            <SheetDescription>{repo}</SheetDescription>
+          </SheetHeader>
+          <div className="px-2">
+            <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
+              {theme === 'dark' ? <><Sun className="size-5" /> Light theme</> : <><Moon className="size-5" /> Dark theme</>}
             </Button>
           </div>
-
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetContent side="left" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
-              <SheetHeader>
-                <SheetTitle>@{user.login}</SheetTitle>
-                <SheetDescription>{repo}</SheetDescription>
-              </SheetHeader>
-              <div className="px-2">
-                <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
-                  {theme === 'dark' ? <><Sun className="size-5" /> Light theme</> : <><Moon className="size-5" /> Dark theme</>}
-                </Button>
-              </div>
-              <SheetFooter>
-                <Button variant="outline" onClick={() => { setMenuOpen(false); logout() }}>Sign out</Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-        </>
-      )}
+          <SheetFooter>
+            <Button variant="outline" onClick={() => { setMenuOpen(false); logout() }}>Sign out</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {showNewFile && (
         <NewFileModal

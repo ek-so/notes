@@ -2,6 +2,7 @@ const TOKEN_KEY = 'brain_gh_token'
 const REPO_KEY = 'brain_gh_repo'
 const THEME_KEY = 'folio_theme'
 const FOLDER_KEY = 'folio_folder'
+const FILE_KEY = 'folio_file'
 const DRAFT_PREFIX = 'folio_draft_'
 const CHANGES_KEY = 'folio_changes_'
 
@@ -36,6 +37,15 @@ export const storage = {
   },
   setFolder: (folder) => {
     try { sessionStorage.setItem(FOLDER_KEY, folder) } catch {}
+  },
+  getFile: () => {
+    try { return sessionStorage.getItem(FILE_KEY) || null } catch { return null }
+  },
+  setFile: (path) => {
+    try {
+      if (path) sessionStorage.setItem(FILE_KEY, path)
+      else sessionStorage.removeItem(FILE_KEY)
+    } catch {}
   },
 }
 

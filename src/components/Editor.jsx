@@ -52,7 +52,29 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
     return () => clearTimeout(timer)
   }, [content])
 
-  useEffect(() => flush, [])
+  // Flush on close, before a reload (pull-to-refresh) and before Sync
+  useEffect(() => {
+    window.addEventListener('pagehide', flush)
+    window.addEventListener('folio:flush', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('folio:flush', flush)
+      flush()
+    }
+  }, [])
+
+  // The file changed on GitHub (e.g. after Sync): compare edits against the
+  // new version, and show it if nothing is edited locally
+  const shaRef = useRef(entry.sha)
+  useEffect(() => {
+    if (entry.sha === shaRef.current) return
+    shaRef.current = entry.sha
+    const hasEdit = edited !== undefined
+    getBlob(entry.sha).then(original => {
+      originalRef.current = original
+      if (!hasEdit && pendingRef.current === null) setContent(original)
+    }).catch(() => {})
+  }, [entry.sha])
 
   function flush() {
     if (pendingRef.current === null || originalRef.current === null) return
@@ -111,7 +133,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
+      <div className="flex flex-col flex-1 min-h-0">
         <Header title={fileName} onHome={onHome} onBack={onClose} />
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
@@ -121,7 +143,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
+    <div className="flex flex-col flex-1 min-h-0">
       <Header title={fileName} changed={changed} onHome={onHome} onBack={onClose}>
         <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
           <button
