@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Menu, Plus, FileText, Folder, Pencil, Trash2 } from 'lucide-react'
+import { List, Plus, FileText, Folder, PencilSimple, Trash, ArrowLeft, DotsThree } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
 import RenameModal from './RenameModal.jsx'
@@ -84,10 +84,10 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-1 min-w-0">
           {path ? (
-            <Button variant="ghost" size="icon" onClick={goBack} aria-label="Back" className="shrink-0">←</Button>
+            <Button variant="ghost" size="icon" onClick={goBack} aria-label="Back" className="shrink-0"><ArrowLeft className="size-5" /></Button>
           ) : (
             <Button variant="ghost" size="icon" onClick={onMenu} aria-label="Menu" className="shrink-0">
-              <Menu className="size-5" />
+              <List className="size-5" />
             </Button>
           )}
           <span className="text-xl font-bold truncate">{currentFolder}</span>
@@ -138,18 +138,18 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                     <span className="flex-1 text-base truncate">
                       {base}
                       {ext && <span className="text-muted-foreground">{ext}</span>}
-                      {item.changed && <span className="ml-1.5 text-primary text-xs">●</span>}
+                      {item.changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
                     </span>
                   </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" aria-label="More actions"
-                        className="shrink-0 text-muted-foreground">⋯</Button>
+                        className="shrink-0 text-muted-foreground"><DotsThree className="size-5" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
-                      <DropdownMenuItem onSelect={() => setRenameItem(item)}><Pencil /> Rename</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setRenameItem(item)}><PencilSimple /> Rename</DropdownMenuItem>
                       <DropdownMenuItem variant="destructive" onSelect={() => setDeleteItem(item)}>
-                        <Trash2 /> Delete
+                        <Trash /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

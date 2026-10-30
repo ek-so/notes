@@ -3,7 +3,7 @@ import { getBlob } from '../lib/github.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { Button } from './ui/button.jsx'
-import { House } from 'lucide-react'
+import { House, ArrowLeft } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils.js'
 
 marked.setOptions({ breaks: true, gfm: true })
@@ -65,7 +65,7 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
     return (
       <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-lg shrink-0">←</Button>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="shrink-0"><ArrowLeft className="size-5" /></Button>
           <span className="text-base font-semibold text-muted-foreground">Loading…</span>
         </div>
         <div className="flex justify-center py-12">
@@ -82,10 +82,10 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
           <House className="size-5" />
         </Button>
         <div className="h-5 w-px bg-border shrink-0" />
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="text-lg shrink-0">←</Button>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="shrink-0"><ArrowLeft className="size-5" /></Button>
         <span className="flex-1 text-base font-semibold truncate min-w-0">
           {fileName}
-          {changed && <span className="ml-1.5 text-primary text-xs">●</span>}
+          {changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
         </span>
         <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
           <button

@@ -21,7 +21,7 @@ function getEffectiveTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
 }
-import { RefreshCw, Check, X } from 'lucide-react'
+import { ArrowsClockwise, Check, X, Sun, Moon } from '@phosphor-icons/react'
 import { Button } from './components/ui/button.jsx'
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './components/ui/sheet.jsx'
 import { cn } from '@/lib/utils.js'
@@ -278,7 +278,7 @@ export default function App() {
             >
               {syncState === 'done' ? <Check className="size-4" />
                 : syncState === 'error' ? <X className="size-4" />
-                : <RefreshCw className={cn('size-4', syncing && 'animate-spin')} />}
+                : <ArrowsClockwise className={cn('size-4', syncing && 'animate-spin')} />}
               {syncState === 'done' ? 'Synced' : syncState === 'error' ? 'Failed' : 'Sync'}
               {changeCount > 0 && syncState === 'idle' && !syncing && (
                 <span className="bg-primary-foreground text-primary rounded-full text-[11px] min-w-5 h-5 px-1 flex items-center justify-center font-semibold">
@@ -296,7 +296,7 @@ export default function App() {
               </SheetHeader>
               <div className="px-2">
                 <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
-                  {theme === 'dark' ? '☀️ Light theme' : '🌙 Dark theme'}
+                  {theme === 'dark' ? <><Sun className="size-5" /> Light theme</> : <><Moon className="size-5" /> Dark theme</>}
                 </Button>
               </div>
               <SheetFooter>
