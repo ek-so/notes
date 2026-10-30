@@ -2,6 +2,7 @@ const TOKEN_KEY = 'brain_gh_token'
 const REPO_KEY = 'brain_gh_repo'
 const THEME_KEY = 'folio_theme'
 const DRAFT_PREFIX = 'folio_draft_'
+const CHANGES_KEY = 'folio_changes_'
 
 export const storage = {
   getToken: () => {
@@ -30,16 +31,17 @@ export const storage = {
   },
 }
 
-export const drafts = {
-  get: (path) => {
-    try { return localStorage.getItem(DRAFT_PREFIX + path) } catch { return null }
+export const localChanges = {
+  get: (repo) => {
+    try { return JSON.parse(localStorage.getItem(CHANGES_KEY + repo)) } catch { return null }
   },
-  set: (path, content) => {
-    try { localStorage.setItem(DRAFT_PREFIX + path, content) } catch {}
+  set: (repo, changes) => {
+    try { localStorage.setItem(CHANGES_KEY + repo, JSON.stringify(changes)) } catch {}
   },
-  clear: (path) => {
-    try { localStorage.removeItem(DRAFT_PREFIX + path) } catch {}
-  },
+}
+
+// Per-file drafts from older versions. Migrated into localChanges on load.
+export const legacyDrafts = {
   all: () => {
     try {
       const result = {}
@@ -52,13 +54,7 @@ export const drafts = {
       return result
     } catch { return {} }
   },
-  count: () => {
-    try {
-      let n = 0
-      for (let i = 0; i < localStorage.length; i++) {
-        if (localStorage.key(i)?.startsWith(DRAFT_PREFIX)) n++
-      }
-      return n
-    } catch { return 0 }
+  clear: (path) => {
+    try { localStorage.removeItem(DRAFT_PREFIX + path) } catch {}
   },
 }

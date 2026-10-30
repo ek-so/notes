@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getFile, saveFile } from '../lib/github.js'
-import { drafts } from '../lib/storage.js'
+import { getBlob } from '../lib/github.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { Button } from './ui/button.jsx'
@@ -8,18 +7,16 @@ import { cn } from '@/lib/utils.js'
 
 marked.setOptions({ breaks: true, gfm: true })
 
-export default function Editor({ path, onClose }) {
+export default function Editor({ path, entry, edited, onEdit, onClose }) {
   const [content, setContent] = useState('')
-  const [sha, setSha] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
-  const [syncState, setSyncState] = useState('idle') // idle | saving | saved | error
-  const [hasDraft, setHasDraft] = useState(false)
   const [mode, setMode] = useState('edit')
   const textareaRef = useRef()
-  const contentRef = useRef(content)
+  const originalRef = useRef(null)
+  const pendingRef = useRef(null)
+  const onEditRef = useRef(onEdit)
 
-  useEffect(() => { contentRef.current = content }, [content])
+  useEffect(() => { onEditRef.current = onEdit }, [onEdit])
 
   useEffect(() => { load() }, [path])
 
@@ -27,54 +24,39 @@ export default function Editor({ path, onClose }) {
     if (mode === 'edit') textareaRef.current?.focus()
   }, [mode])
 
-  // Auto-save to localStorage
+  // Report edits after a pause, and flush on close
   useEffect(() => {
-    if (loading) return
-    const timer = setTimeout(() => {
-      drafts.set(path, contentRef.current)
-      setHasDraft(true)
-    }, 800)
+    if (pendingRef.current === null) return
+    const timer = setTimeout(flush, 400)
     return () => clearTimeout(timer)
-  }, [content, path, loading])
+  }, [content])
+
+  useEffect(() => flush, [])
+
+  function flush() {
+    if (pendingRef.current === null || originalRef.current === null) return
+    onEditRef.current(pendingRef.current, originalRef.current)
+    pendingRef.current = null
+  }
 
   async function load() {
     setLoading(true)
     try {
-      const result = await getFile(path)
-      setSha(result.sha)
-      const draft = drafts.get(path)
-      if (draft !== null) {
-        setContent(draft)
-        setHasDraft(true)
-      } else {
-        setContent(result.content)
-        setHasDraft(false)
-      }
+      const original = await getBlob(entry.sha)
+      originalRef.current = original
+      setContent(edited ?? original)
     } catch {
-      setContent('')
+      setContent(edited ?? '')
     }
     setLoading(false)
   }
 
-  async function sync() {
-    if (syncing) return
-    setSyncing(true)
-    setSyncState('saving')
-    try {
-      const { sha: freshSha } = await getFile(path)
-      await saveFile(path, contentRef.current, freshSha)
-      setSha(freshSha)
-      drafts.clear(path)
-      setHasDraft(false)
-      setSyncState('saved')
-      setTimeout(() => setSyncState('idle'), 2000)
-    } catch {
-      setSyncState('error')
-      setTimeout(() => setSyncState('idle'), 3000)
-    }
-    setSyncing(false)
+  function handleChange(value) {
+    pendingRef.current = value
+    setContent(value)
   }
 
+  const changed = edited !== undefined
   const fileName = path.split('/').pop().replace(/\.md$/, '')
   const preview = DOMPurify.sanitize(marked.parse(content))
 
@@ -98,34 +80,19 @@ export default function Editor({ path, onClose }) {
         <Button variant="ghost" size="icon" onClick={onClose} className="text-lg shrink-0">←</Button>
         <span className="flex-1 text-base font-semibold truncate min-w-0">
           {fileName}
-          {hasDraft && <span className="ml-1.5 text-primary text-xs">●</span>}
+          {changed && <span className="ml-1.5 text-primary text-xs">●</span>}
         </span>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex bg-secondary rounded-lg p-0.5">
-            <button
-              className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
-                mode === 'edit' ? 'bg-card text-foreground' : 'text-muted-foreground')}
-              onClick={() => setMode('edit')}
-            >Edit</button>
-            <button
-              className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
-                mode === 'preview' ? 'bg-card text-foreground' : 'text-muted-foreground')}
-              onClick={() => setMode('preview')}
-            >Preview</button>
-          </div>
-          <Button
-            size="sm"
-            onClick={sync}
-            disabled={syncing}
-            className={cn('min-w-[52px]',
-              syncState === 'saved' && 'bg-green-600 hover:bg-green-600',
-              syncState === 'error' && 'bg-destructive hover:bg-destructive')}
-          >
-            {syncState === 'saving' && '…'}
-            {syncState === 'saved' && '✓'}
-            {syncState === 'error' && '✗'}
-            {syncState === 'idle' && 'Sync'}
-          </Button>
+        <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
+          <button
+            className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
+              mode === 'edit' ? 'bg-card text-foreground' : 'text-muted-foreground')}
+            onClick={() => setMode('edit')}
+          >Edit</button>
+          <button
+            className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
+              mode === 'preview' ? 'bg-card text-foreground' : 'text-muted-foreground')}
+            onClick={() => setMode('preview')}
+          >Preview</button>
         </div>
       </div>
 
@@ -135,7 +102,7 @@ export default function Editor({ path, onClose }) {
           className="flex-1 w-full px-5 py-4 bg-background text-foreground resize-none outline-none font-mono text-[15px] leading-relaxed"
           style={{ WebkitOverflowScrolling: 'touch' }}
           value={content}
-          onChange={e => setContent(e.target.value)}
+          onChange={e => handleChange(e.target.value)}
           spellCheck="true"
           autoCorrect="on"
           placeholder="Start writing…"

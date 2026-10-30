@@ -1,28 +1,14 @@
-import { useState, useEffect } from 'react'
-import { listContents } from '../lib/github.js'
+import { useState } from 'react'
 import { Button } from './ui/button.jsx'
+import ItemActionsModal from './ItemActionsModal.jsx'
 import { cn } from '@/lib/utils.js'
 
-export default function FileBrowser({ onSelect, currentPath, onNewFile, repo, draftCount, onSync, syncState }) {
+export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete }) {
   const [path, setPath] = useState('')
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
   const [breadcrumbs, setBreadcrumbs] = useState([])
-  const [error, setError] = useState('')
+  const [actionItem, setActionItem] = useState(null)
 
-  useEffect(() => { load(path) }, [path])
-
-  async function load(p) {
-    setLoading(true)
-    setError('')
-    try {
-      const contents = await listContents(p)
-      setItems(contents)
-    } catch {
-      setError('Failed to load files.')
-    }
-    setLoading(false)
-  }
+  const items = loading || error ? [] : listDir(path)
 
   function navigate(item) {
     if (item.type === 'dir') {
@@ -71,21 +57,37 @@ export default function FileBrowser({ onSelect, currentPath, onNewFile, repo, dr
         <ul className="flex-1 overflow-y-auto py-2" style={{ WebkitOverflowScrolling: 'touch' }}>
           {items.map(item => (
             <li key={item.path}>
-              <button
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
-                  'hover:bg-secondary',
-                  currentPath === item.path && 'bg-primary/10'
-                )}
-                onClick={() => navigate(item)}
-              >
-                <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
-                <span className="flex-1 text-base truncate">{item.name.replace(/\.md$/, '')}</span>
-                {item.type === 'dir' && <span className="text-muted-foreground text-xl shrink-0">›</span>}
-              </button>
+              <div className={cn(
+                'flex items-center pr-2 transition-colors hover:bg-secondary',
+                currentPath === item.path && 'bg-primary/10'
+              )}>
+                <button
+                  className="flex-1 min-w-0 flex items-center gap-3 pl-4 py-3 text-left"
+                  onClick={() => navigate(item)}
+                >
+                  <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
+                  <span className="flex-1 text-base truncate">{item.name.replace(/\.md$/, '')}</span>
+                  {item.type === 'dir' && <span className="text-muted-foreground text-xl shrink-0">›</span>}
+                </button>
+                <Button variant="ghost" size="icon" onClick={() => setActionItem(item)}
+                  aria-label="More actions" className="shrink-0 text-muted-foreground">⋯</Button>
+              </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {actionItem && (
+        <ItemActionsModal
+          item={actionItem}
+          onRename={name => {
+            const err = onRename(actionItem, name)
+            if (!err) setActionItem(null)
+            return err
+          }}
+          onDelete={() => { onDelete(actionItem); setActionItem(null) }}
+          onClose={() => setActionItem(null)}
+        />
       )}
     </div>
   )

@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Auth from './components/Auth.jsx'
 import RepoSetup from './components/RepoSetup.jsx'
 import FileBrowser from './components/FileBrowser.jsx'
 import Editor from './components/Editor.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
-import { init, setRepo, getUser, getFile, saveFile } from './lib/github.js'
-import { storage, drafts } from './lib/storage.js'
+import ConflictModal from './components/ConflictModal.jsx'
+import { init, setRepo, getUser, getTree, getBlob, commitTree } from './lib/github.js'
+import { storage, localChanges, legacyDrafts } from './lib/storage.js'
+import {
+  empty, count, virtualFiles, listDir, exists, setEdit, rename, remove,
+  conflicts, discard, treeEntries, commitMessage,
+} from './lib/changes.js'
 
 function getEffectiveTheme() {
   const saved = storage.getTheme()
@@ -26,7 +31,11 @@ export default function App() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [newFileFolder, setNewFileFolder] = useState(null)
   const [showNewFile, setShowNewFile] = useState(false)
-  const [draftCount, setDraftCount] = useState(0)
+  const [remote, setRemote] = useState(null)
+  const [remoteError, setRemoteError] = useState('')
+  const [changes, setChanges] = useState(empty)
+  const changesRef = useRef(changes)
+  const [conflictPaths, setConflictPaths] = useState([])
   const [syncing, setSyncing] = useState(false)
   const [syncState, setSyncState] = useState('idle') // idle | done | error
   const [theme, setTheme] = useState(() => {
@@ -66,8 +75,125 @@ export default function App() {
     } else {
       setReady(true)
     }
-    setDraftCount(drafts.count())
   }, [])
+
+  useEffect(() => {
+    if (!user || !repo) return
+    changesRef.current = localChanges.get(repo) || empty()
+    setChanges(changesRef.current)
+    setRemote(null)
+    load()
+  }, [user, repo])
+
+  const virtual = useMemo(
+    () => remote ? virtualFiles(remote.files, changes) : {},
+    [remote, changes]
+  )
+  const changeCount = count(changes)
+
+  function updateChanges(fn) {
+    const next = fn(changesRef.current)
+    changesRef.current = next
+    localChanges.set(repo, next)
+    setChanges(next)
+  }
+
+  async function pull() {
+    const latest = await getTree()
+    setRemote(latest)
+    return latest
+  }
+
+  async function load() {
+    setRemoteError('')
+    try {
+      const latest = await pull()
+      await migrateDrafts(latest)
+      setConflictPaths(conflicts(changesRef.current, latest.files))
+    } catch {
+      setRemoteError('Failed to load files.')
+    }
+  }
+
+  // Keep only old drafts that really differ from GitHub
+  async function migrateDrafts(latest) {
+    for (const [path, content] of Object.entries(legacyDrafts.all())) {
+      const file = latest.files[path]
+      if (!file) continue
+      if (!(path in changesRef.current.edits)) {
+        const original = await getBlob(file.sha)
+        updateChanges(ch => setEdit(ch, { orig: path, sha: file.sha }, content, original))
+      }
+      legacyDrafts.clear(path)
+    }
+  }
+
+  function flash(state) {
+    setSyncState(state)
+    setTimeout(() => setSyncState('idle'), 2000)
+  }
+
+  async function push(latest) {
+    const ch = changesRef.current
+    if (!count(ch)) return
+    await commitTree(latest, treeEntries(ch, latest.files), commitMessage(ch))
+    updateChanges(() => empty())
+    await pull()
+  }
+
+  async function sync() {
+    if (syncing) return
+    setSyncing(true)
+    try {
+      const latest = await pull()
+      const conflicted = conflicts(changesRef.current, latest.files)
+      if (conflicted.length) setConflictPaths(conflicted)
+      else {
+        await push(latest)
+        flash('done')
+      }
+    } catch {
+      flash('error')
+    }
+    setSyncing(false)
+  }
+
+  async function pushLocal() {
+    setSyncing(true)
+    try {
+      await push(await pull())
+      setConflictPaths([])
+      flash('done')
+    } catch {
+      flash('error')
+    }
+    setSyncing(false)
+  }
+
+  function takeRemote() {
+    updateChanges(ch => discard(ch, conflictPaths))
+    setConflictPaths([])
+  }
+
+  function handleRename(item, name) {
+    if (name.includes('/')) return 'Name can\'t contain "/".'
+    const parent = item.path.slice(0, item.path.lastIndexOf('/') + 1)
+    const to = parent + name + (item.type === 'dir' ? '' : '.md')
+    if (exists(virtual, to)) return 'That name is already taken.'
+    updateChanges(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
+    return null
+  }
+
+  function handleDelete(item) {
+    if (selectedFile === item.path || selectedFile?.startsWith(item.path + '/')) setSelectedFile(null)
+    updateChanges(ch => remove(ch, virtual, item.path, item.type === 'dir'))
+  }
+
+  async function handleCreated(path) {
+    setShowNewFile(false)
+    try { await pull() } catch {}
+    setSelectedFile(path)
+  }
 
   async function authenticate(token) {
     init(token)
@@ -90,32 +216,6 @@ export default function App() {
     setSelectedFile(null)
   }
 
-  function handleEditorClose() {
-    setSelectedFile(null)
-    setDraftCount(drafts.count())
-  }
-
-  async function syncAll() {
-    const all = drafts.all()
-    const entries = Object.entries(all)
-    if (!entries.length) return
-    setSyncing(true)
-    let errors = 0
-    for (const [draftPath, content] of entries) {
-      try {
-        const { sha } = await getFile(draftPath)
-        await saveFile(draftPath, content, sha)
-        drafts.clear(draftPath)
-      } catch {
-        errors++
-      }
-    }
-    setSyncing(false)
-    setDraftCount(drafts.count())
-    setSyncState(errors ? 'error' : 'done')
-    setTimeout(() => setSyncState('idle'), 2000)
-  }
-
   if (!ready) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
@@ -129,18 +229,28 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full max-w-[680px] mx-auto bg-background">
-      {selectedFile ? (
-        <Editor path={selectedFile} onClose={handleEditorClose} />
+      {selectedFile && virtual[selectedFile] ? (
+        <Editor
+          key={selectedFile}
+          path={selectedFile}
+          entry={virtual[selectedFile]}
+          edited={changes.edits[virtual[selectedFile].orig]}
+          onEdit={(content, original) =>
+            updateChanges(ch => setEdit(ch, virtual[selectedFile], content, original))}
+          onClose={() => setSelectedFile(null)}
+        />
       ) : (
         <>
           <FileBrowser
+            listDir={dir => listDir(virtual, dir)}
+            loading={!remote && !remoteError}
+            error={remoteError}
+            onRename={handleRename}
+            onDelete={handleDelete}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
             onNewFile={f => { setNewFileFolder(f || ''); setShowNewFile(true) }}
             repo={repo}
-            draftCount={draftCount}
-            onSync={syncAll}
-            syncState={syncState}
           />
           <div
             className="flex items-center justify-between px-4 py-3 border-t border-border bg-background shrink-0"
@@ -151,16 +261,16 @@ export default function App() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={syncAll}
-                disabled={syncing || draftCount === 0}
+                onClick={sync}
+                disabled={syncing}
                 className={cn('gap-1.5 text-muted-foreground',
                   syncState === 'done' && 'text-green-500',
                   syncState === 'error' && 'text-destructive')}
               >
                 {syncing ? '…' : syncState === 'done' ? '✓' : syncState === 'error' ? '✗' : 'Sync'}
-                {draftCount > 0 && syncState === 'idle' && !syncing && (
+                {changeCount > 0 && syncState === 'idle' && !syncing && (
                   <span className="bg-primary text-primary-foreground rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-medium">
-                    {draftCount}
+                    {changeCount}
                   </span>
                 )}
               </Button>
@@ -178,8 +288,18 @@ export default function App() {
       {showNewFile && (
         <NewFileModal
           folder={newFileFolder}
-          onCreated={path => { setShowNewFile(false); setSelectedFile(path) }}
+          onCreated={handleCreated}
           onClose={() => setShowNewFile(false)}
+        />
+      )}
+
+      {conflictPaths.length > 0 && (
+        <ConflictModal
+          paths={conflictPaths}
+          busy={syncing}
+          onPushLocal={pushLocal}
+          onUseRemote={takeRemote}
+          onClose={() => setConflictPaths([])}
         />
       )}
     </div>
