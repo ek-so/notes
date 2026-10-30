@@ -8,7 +8,7 @@ import ConflictModal from './components/ConflictModal.jsx'
 import { init, setRepo, getUser, getTree, getBlob, commitTree } from './lib/github.js'
 import { storage, localChanges, legacyDrafts } from './lib/storage.js'
 import {
-  empty, count, virtualFiles, listDir, exists, setEdit, rename, remove,
+  empty, count, virtualFiles, listDir, changedPaths, exists, setEdit, rename, remove,
   conflicts, discard, treeEntries, commitMessage,
 } from './lib/changes.js'
 
@@ -94,6 +94,7 @@ export default function App() {
     [remote, changes]
   )
   const changeCount = count(changes)
+  const changed = useMemo(() => changedPaths(changes), [changes])
 
   function updateChanges(fn) {
     const next = fn(changesRef.current)
@@ -246,7 +247,7 @@ export default function App() {
       ) : (
         <>
           <FileBrowser
-            listDir={dir => listDir(virtual, dir)}
+            listDir={dir => listDir(virtual, dir, changed)}
             loading={!remote && !remoteError}
             error={remoteError}
             onRename={handleRename}

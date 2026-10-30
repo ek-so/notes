@@ -125,7 +125,10 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
                   onClick={() => navigate(item)}
                 >
                   <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
-                  <span className="flex-1 text-base truncate">{item.name.replace(/\.md$/, '')}</span>
+                  <span className="flex-1 text-base truncate">
+                    {item.name.replace(/\.md$/, '')}
+                    {item.changed && <span className="ml-1.5 text-primary text-xs">●</span>}
+                  </span>
                 </button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

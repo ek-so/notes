@@ -36,7 +36,28 @@ export function virtualFiles(files, ch) {
   return result
 }
 
-export function listDir(virtual, dir) {
+// Paths to mark as changed: edited/moved files and every folder holding a
+// change (including deletions).
+export function changedPaths(ch) {
+  const result = new Set()
+  const addWithParents = path => {
+    result.add(path)
+    for (let i = path.lastIndexOf('/'); i > 0; i = path.lastIndexOf('/', i - 1)) {
+      result.add(path.slice(0, i))
+    }
+  }
+  for (const orig of Object.keys(ch.base)) {
+    const target = orig in ch.moves ? ch.moves[orig] : orig
+    if (target !== null) addWithParents(target)
+    if (target !== orig) {
+      const slash = orig.lastIndexOf('/')
+      if (slash > 0) addWithParents(orig.slice(0, slash))
+    }
+  }
+  return result
+}
+
+export function listDir(virtual, dir, changed = new Set()) {
   const prefix = dir ? dir + '/' : ''
   const dirs = new Map()
   const items = []
@@ -45,10 +66,10 @@ export function listDir(virtual, dir) {
     const rest = path.slice(prefix.length)
     const slash = rest.indexOf('/')
     if (slash === -1) {
-      if (rest.endsWith('.md')) items.push({ name: rest, path, type: 'file' })
+      if (rest.endsWith('.md')) items.push({ name: rest, path, type: 'file', changed: changed.has(path) })
     } else {
       const name = rest.slice(0, slash)
-      dirs.set(name, { name, path: prefix + name, type: 'dir' })
+      dirs.set(name, { name, path: prefix + name, type: 'dir', changed: changed.has(prefix + name) })
     }
   }
   return [...dirs.values(), ...items]
