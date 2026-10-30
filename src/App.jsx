@@ -31,7 +31,7 @@ export default function App() {
   const [repo, setRepoState] = useState(null)
   const [ready, setReady] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [folder, setFolder] = useState('')
+  const [folder, setFolder] = useState(storage.getFolder)
   const [newFileFolder, setNewFileFolder] = useState(null)
   const [newFileKind, setNewFileKind] = useState('note')
   const [showNewFile, setShowNewFile] = useState(false)
@@ -81,6 +81,8 @@ export default function App() {
       setReady(true)
     }
   }, [])
+
+  useEffect(() => { storage.setFolder(folder) }, [folder])
 
   useEffect(() => {
     if (!user || !repo) return
@@ -257,7 +259,7 @@ export default function App() {
             error={remoteError}
             onRename={handleRename}
             onDelete={handleDelete}
-            onRefresh={load}
+            onRefresh={() => window.location.reload()}
             onMenu={() => setMenuOpen(true)}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
