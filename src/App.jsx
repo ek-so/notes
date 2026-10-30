@@ -21,6 +21,7 @@ function getEffectiveTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
 }
+import { RefreshCw, Check, X } from 'lucide-react'
 import { Button } from './components/ui/button.jsx'
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './components/ui/sheet.jsx'
 import { cn } from '@/lib/utils.js'
@@ -261,17 +262,17 @@ export default function App() {
             style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
           >
             <Button
-              variant="ghost"
-              size="sm"
               onClick={sync}
               disabled={syncing}
-              className={cn('gap-1.5 text-muted-foreground',
-                syncState === 'done' && 'text-green-500',
-                syncState === 'error' && 'text-destructive')}
+              variant={syncState === 'error' ? 'destructive' : 'default'}
+              className="gap-2"
             >
-              {syncing ? '…' : syncState === 'done' ? '✓' : syncState === 'error' ? '✗' : 'Sync'}
+              {syncState === 'done' ? <Check className="size-4" />
+                : syncState === 'error' ? <X className="size-4" />
+                : <RefreshCw className={cn('size-4', syncing && 'animate-spin')} />}
+              {syncState === 'done' ? 'Synced' : syncState === 'error' ? 'Failed' : 'Sync'}
               {changeCount > 0 && syncState === 'idle' && !syncing && (
-                <span className="bg-primary text-primary-foreground rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-medium">
+                <span className="bg-primary-foreground text-primary rounded-full text-[11px] min-w-5 h-5 px-1 flex items-center justify-center font-semibold">
                   {changeCount}
                 </span>
               )}

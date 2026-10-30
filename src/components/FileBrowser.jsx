@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, Plus } from 'lucide-react'
 import { Button } from './ui/button.jsx'
 import ItemActionsModal from './ItemActionsModal.jsx'
 import { cn } from '@/lib/utils.js'
@@ -69,8 +69,9 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
           )}
           <span className="text-xl font-bold truncate">{currentFolder}</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => onNewFile(path)} aria-label="New note"
-          className="shrink-0 text-primary text-2xl font-light">＋</Button>
+        <Button size="icon" onClick={() => onNewFile(path)} aria-label="New note" className="shrink-0">
+          <Plus className="size-5" />
+        </Button>
       </div>
 
       {loading && (
