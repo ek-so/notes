@@ -3,13 +3,14 @@ import { Menu, Plus, FileText, Folder, Pencil, Trash2 } from 'lucide-react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
 import RenameModal from './RenameModal.jsx'
+import DeleteModal from './DeleteModal.jsx'
 import { cn } from '@/lib/utils.js'
 
 export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
   const [path, setPath] = useState('')
   const [breadcrumbs, setBreadcrumbs] = useState([])
   const [renameItem, setRenameItem] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [deleteItem, setDeleteItem] = useState(null)
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const pullStart = useRef(null)
@@ -126,22 +127,15 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
                   <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
                   <span className="flex-1 text-base truncate">{item.name.replace(/\.md$/, '')}</span>
                 </button>
-                <DropdownMenu onOpenChange={open => !open && setConfirmDelete(null)}>
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" aria-label="More actions"
                       className="shrink-0 text-muted-foreground">⋯</Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
                     <DropdownMenuItem onSelect={() => setRenameItem(item)}><Pencil /> Rename</DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={e => {
-                        if (confirmDelete === item.path) return onDelete(item)
-                        e.preventDefault()
-                        setConfirmDelete(item.path)
-                      }}
-                    >
-                      <Trash2 /> {confirmDelete === item.path ? 'Tap again to delete' : 'Delete'}
+                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteItem(item)}>
+                      <Trash2 /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -160,6 +154,14 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
             return err
           }}
           onClose={() => setRenameItem(null)}
+        />
+      )}
+
+      {deleteItem && (
+        <DeleteModal
+          item={deleteItem}
+          onDelete={() => { onDelete(deleteItem); setDeleteItem(null) }}
+          onClose={() => setDeleteItem(null)}
         />
       )}
     </div>
