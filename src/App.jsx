@@ -8,7 +8,7 @@ import ConflictModal from './components/ConflictModal.jsx'
 import { init, setRepo, getUser, getTree, getBlob, commitTree } from './lib/github.js'
 import { storage, localChanges, legacyDrafts } from './lib/storage.js'
 import {
-  empty, count, virtualFiles, listDir, changedPaths, exists, setEdit, rename, remove,
+  empty, count, virtualFiles, listDir, changedPaths, splitName, exists, setEdit, rename, remove,
   conflicts, discard, treeEntries, commitMessage,
 } from './lib/changes.js'
 
@@ -183,7 +183,7 @@ export default function App() {
   function handleRename(item, name) {
     if (name.includes('/')) return 'Name can\'t contain "/".'
     const parent = item.path.slice(0, item.path.lastIndexOf('/') + 1)
-    const to = parent + name + (item.type === 'dir' ? '' : '.md')
+    const to = parent + name + (item.type === 'dir' ? '' : splitName(item.name)[1])
     if (exists(virtual, to)) return 'That name is already taken.'
     updateChanges(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
     return null

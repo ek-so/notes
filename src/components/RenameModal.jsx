@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from './ui/button.jsx'
 import { Input } from './ui/input.jsx'
+import { splitName } from '../lib/changes.js'
 
 export default function RenameModal({ item, onRename, onClose }) {
   const isDir = item.type === 'dir'
-  const currentName = item.name.replace(/\.md$/, '')
+  const [currentName, ext] = isDir ? [item.name, ''] : splitName(item.name)
   const [name, setName] = useState(currentName)
   const [error, setError] = useState('')
   const inputRef = useRef()
@@ -32,16 +33,19 @@ export default function RenameModal({ item, onRename, onClose }) {
         className="w-full max-w-[680px] bg-card rounded-t-2xl p-6 flex flex-col gap-4"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold truncate">Rename {isDir ? 'folder' : 'note'}</h2>
+        <h2 className="text-lg font-bold truncate">Rename {isDir ? 'folder' : ext === '.md' ? 'note' : 'file'}</h2>
         <form onSubmit={handleRename} className="flex flex-col gap-3">
-          <Input
-            ref={inputRef}
-            type="text"
-            value={name}
-            onChange={e => { setName(e.target.value); setError('') }}
-            autoCorrect="off"
-            className="h-11 bg-background border-border"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              ref={inputRef}
+              type="text"
+              value={name}
+              onChange={e => { setName(e.target.value); setError('') }}
+              autoCorrect="off"
+              className="h-11 bg-background border-border"
+            />
+            {ext && <span className="text-muted-foreground shrink-0">{ext}</span>}
+          </div>
           {error && <p className="text-destructive text-xs">{error}</p>}
           <div className="flex gap-2">
             <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>

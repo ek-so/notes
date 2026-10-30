@@ -2,7 +2,7 @@ import { Button } from './ui/button.jsx'
 
 export default function DeleteModal({ item, onDelete, onClose }) {
   const isDir = item.type === 'dir'
-  const name = item.name.replace(/\.md$/, '')
+  const name = item.name
 
   return (
     <div
@@ -15,7 +15,7 @@ export default function DeleteModal({ item, onDelete, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         <div>
-          <h2 className="text-lg font-bold truncate">Delete {isDir ? 'folder' : 'note'} “{name}”?</h2>
+          <h2 className="text-lg font-bold truncate">Delete {isDir ? 'folder' : name.endsWith('.md') ? 'note' : 'file'} “{name}”?</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {isDir ? 'Everything inside it will be deleted too. ' : ''}It's removed from GitHub when you sync.
           </p>

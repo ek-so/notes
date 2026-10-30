@@ -57,6 +57,12 @@ export function changedPaths(ch) {
   return result
 }
 
+// "photo.png" -> ["photo", ".png"]; names without an extension keep ext ''.
+export function splitName(name) {
+  const dot = name.lastIndexOf('.')
+  return dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, '']
+}
+
 export function listDir(virtual, dir, changed = new Set()) {
   const prefix = dir ? dir + '/' : ''
   const dirs = new Map()
@@ -66,7 +72,7 @@ export function listDir(virtual, dir, changed = new Set()) {
     const rest = path.slice(prefix.length)
     const slash = rest.indexOf('/')
     if (slash === -1) {
-      if (rest.endsWith('.md')) items.push({ name: rest, path, type: 'file', changed: changed.has(path) })
+      items.push({ name: rest, path, type: 'file', changed: changed.has(path) })
     } else {
       const name = rest.slice(0, slash)
       dirs.set(name, { name, path: prefix + name, type: 'dir', changed: changed.has(prefix + name) })

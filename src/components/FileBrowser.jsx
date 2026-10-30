@@ -5,6 +5,9 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import RenameModal from './RenameModal.jsx'
 import DeleteModal from './DeleteModal.jsx'
 import { cn } from '@/lib/utils.js'
+import { splitName } from '../lib/changes.js'
+
+const IMAGE = /^\.(png|jpe?g|gif|webp|svg|heic|avif|bmp)$/i
 
 export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
   const [path, setPath] = useState('')
@@ -114,37 +117,43 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
               />
             </li>
           )}
-          {items.map(item => (
-            <li key={item.path}>
-              <div className={cn(
-                'flex items-center pr-2 transition-colors hover:bg-secondary',
-                currentPath === item.path && 'bg-primary/10'
-              )}>
-                <button
-                  className="flex-1 min-w-0 flex items-center gap-3 pl-4 py-3 text-left"
-                  onClick={() => navigate(item)}
-                >
-                  <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
-                  <span className="flex-1 text-base truncate">
-                    {item.name.replace(/\.md$/, '')}
-                    {item.changed && <span className="ml-1.5 text-primary text-xs">●</span>}
-                  </span>
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="More actions"
-                      className="shrink-0 text-muted-foreground">⋯</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
-                    <DropdownMenuItem onSelect={() => setRenameItem(item)}><Pencil /> Rename</DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteItem(item)}>
-                      <Trash2 /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </li>
-          ))}
+          {items.map(item => {
+            const [base, ext] = item.type === 'dir' ? [item.name, ''] : splitName(item.name)
+            const openable = item.type === 'dir' || ext === '.md'
+            return (
+              <li key={item.path}>
+                <div className={cn(
+                  'flex items-center pr-2 transition-colors hover:bg-secondary',
+                  currentPath === item.path && 'bg-primary/10'
+                )}>
+                  <button
+                    className="flex-1 min-w-0 flex items-center gap-3 pl-4 py-3 text-left disabled:cursor-default"
+                    onClick={() => navigate(item)}
+                    disabled={!openable}
+                  >
+                    <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : IMAGE.test(ext) ? '🖼️' : '📄'}</span>
+                    <span className="flex-1 text-base truncate">
+                      {base}
+                      {ext && <span className="text-muted-foreground">{ext}</span>}
+                      {item.changed && <span className="ml-1.5 text-primary text-xs">●</span>}
+                    </span>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label="More actions"
+                        className="shrink-0 text-muted-foreground">⋯</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
+                      <DropdownMenuItem onSelect={() => setRenameItem(item)}><Pencil /> Rename</DropdownMenuItem>
+                      <DropdownMenuItem variant="destructive" onSelect={() => setDeleteItem(item)}>
+                        <Trash2 /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
 
