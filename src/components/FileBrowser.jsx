@@ -1,14 +1,38 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from './ui/button.jsx'
 import ItemActionsModal from './ItemActionsModal.jsx'
 import { cn } from '@/lib/utils.js'
 
-export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete }) {
+export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh }) {
   const [path, setPath] = useState('')
   const [breadcrumbs, setBreadcrumbs] = useState([])
   const [actionItem, setActionItem] = useState(null)
+  const [pull, setPull] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const pullStart = useRef(null)
 
   const items = loading || error ? [] : listDir(path)
+
+  // Pull-to-refresh: drag down while scrolled to the top
+  function onTouchStart(e) {
+    pullStart.current = e.currentTarget.scrollTop === 0 && !refreshing ? e.touches[0].clientY : null
+  }
+
+  function onTouchMove(e) {
+    if (pullStart.current === null) return
+    const dy = e.touches[0].clientY - pullStart.current
+    setPull(dy > 0 ? Math.min(dy / 2, 80) : 0)
+  }
+
+  async function onTouchEnd() {
+    pullStart.current = null
+    if (pull >= 60) {
+      setRefreshing(true)
+      setPull(0)
+      await onRefresh()
+      setRefreshing(false)
+    } else setPull(0)
+  }
 
   function navigate(item) {
     if (item.type === 'dir') {
@@ -54,7 +78,25 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
         <p className="text-muted-foreground text-sm text-center py-12">No notes yet</p>
       )}
       {!loading && (
-        <ul className="flex-1 overflow-y-auto py-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <ul
+          className="flex-1 overflow-y-auto overscroll-y-contain py-2"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          {(pull > 0 || refreshing) && (
+            <li
+              className={cn('flex justify-center items-end overflow-hidden', !pull && 'transition-[height]')}
+              style={{ height: refreshing ? 48 : pull }}
+            >
+              <div
+                className={cn('w-5 h-5 mb-3 rounded-full border-2 border-border border-t-primary',
+                  refreshing && 'animate-spin')}
+                style={{ transform: refreshing ? undefined : `rotate(${pull * 4}deg)`, opacity: refreshing ? 1 : pull / 60 }}
+              />
+            </li>
+          )}
           {items.map(item => (
             <li key={item.path}>
               <div className={cn(

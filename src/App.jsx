@@ -247,6 +247,7 @@ export default function App() {
             error={remoteError}
             onRename={handleRename}
             onDelete={handleDelete}
+            onRefresh={load}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
             onNewFile={f => { setNewFileFolder(f || ''); setShowNewFile(true) }}
