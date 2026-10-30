@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
+import { Menu } from 'lucide-react'
 import { Button } from './ui/button.jsx'
 import ItemActionsModal from './ItemActionsModal.jsx'
 import { cn } from '@/lib/utils.js'
 
-export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh }) {
+export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
   const [path, setPath] = useState('')
   const [breadcrumbs, setBreadcrumbs] = useState([])
   const [actionItem, setActionItem] = useState(null)
@@ -59,8 +60,12 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
         style={{ paddingTop: 'calc(0.75rem + var(--safe-top))' }}
       >
         <div className="flex items-center gap-1 min-w-0">
-          {breadcrumbs.length > 0 && (
+          {breadcrumbs.length > 0 ? (
             <Button variant="ghost" size="icon" onClick={goBack} aria-label="Back" className="shrink-0">←</Button>
+          ) : (
+            <Button variant="ghost" size="icon" onClick={onMenu} aria-label="Menu" className="shrink-0">
+              <Menu className="size-5" />
+            </Button>
           )}
           <span className="text-xl font-bold truncate">{currentFolder}</span>
         </div>

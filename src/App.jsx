@@ -22,6 +22,7 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
 }
 import { Button } from './components/ui/button.jsx'
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './components/ui/sheet.jsx'
 import { cn } from '@/lib/utils.js'
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
   const changesRef = useRef(changes)
   const [conflictPaths, setConflictPaths] = useState([])
   const [syncing, setSyncing] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [syncState, setSyncState] = useState('idle') // idle | done | error
   const [theme, setTheme] = useState(() => {
     const t = getEffectiveTheme()
@@ -248,41 +250,50 @@ export default function App() {
             onRename={handleRename}
             onDelete={handleDelete}
             onRefresh={load}
+            onMenu={() => setMenuOpen(true)}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
             onNewFile={f => { setNewFileFolder(f || ''); setShowNewFile(true) }}
             repo={repo}
           />
           <div
-            className="flex items-center justify-between px-4 py-3 border-t border-border bg-background shrink-0"
+            className="flex items-center justify-end px-4 py-3 border-t border-border bg-background shrink-0"
             style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
           >
-            <span className="text-sm text-muted-foreground truncate">@{user.login} · {repo}</span>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={sync}
-                disabled={syncing}
-                className={cn('gap-1.5 text-muted-foreground',
-                  syncState === 'done' && 'text-green-500',
-                  syncState === 'error' && 'text-destructive')}
-              >
-                {syncing ? '…' : syncState === 'done' ? '✓' : syncState === 'error' ? '✗' : 'Sync'}
-                {changeCount > 0 && syncState === 'idle' && !syncing && (
-                  <span className="bg-primary text-primary-foreground rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-medium">
-                    {changeCount}
-                  </span>
-                )}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="text-muted-foreground px-2">
-                {theme === 'dark' ? '☀️' : '🌙'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={logout} className="text-muted-foreground">
-                Sign out
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={sync}
+              disabled={syncing}
+              className={cn('gap-1.5 text-muted-foreground',
+                syncState === 'done' && 'text-green-500',
+                syncState === 'error' && 'text-destructive')}
+            >
+              {syncing ? '…' : syncState === 'done' ? '✓' : syncState === 'error' ? '✗' : 'Sync'}
+              {changeCount > 0 && syncState === 'idle' && !syncing && (
+                <span className="bg-primary text-primary-foreground rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-medium">
+                  {changeCount}
+                </span>
+              )}
+            </Button>
           </div>
+
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetContent side="left" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
+              <SheetHeader>
+                <SheetTitle>@{user.login}</SheetTitle>
+                <SheetDescription>{repo}</SheetDescription>
+              </SheetHeader>
+              <div className="px-2">
+                <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
+                  {theme === 'dark' ? '☀️ Light theme' : '🌙 Dark theme'}
+                </Button>
+              </div>
+              <SheetFooter>
+                <Button variant="outline" onClick={() => { setMenuOpen(false); logout() }}>Sign out</Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </>
       )}
 
