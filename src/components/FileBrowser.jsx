@@ -109,7 +109,6 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
                 >
                   <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
                   <span className="flex-1 text-base truncate">{item.name.replace(/\.md$/, '')}</span>
-                  {item.type === 'dir' && <span className="text-muted-foreground text-xl shrink-0">›</span>}
                 </button>
                 <Button variant="ghost" size="icon" onClick={() => setActionItem(item)}
                   aria-label="More actions" className="shrink-0 text-muted-foreground">⋯</Button>
