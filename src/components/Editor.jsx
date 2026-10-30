@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { getBlob, getBlobBase64 } from '../lib/github.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { Hash, PaintBrush } from '@phosphor-icons/react'
 import Header from './Header.jsx'
 import { cn } from '@/lib/utils.js'
 
@@ -30,7 +31,7 @@ function resolveImage(notePath, src) {
 export default function Editor({ path, entry, files, edited, onEdit, onClose, onHome }) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState('edit')
+  const [mode, setMode] = useState('preview')
   const [images, setImages] = useState({}) // repo path -> data URL, or null if unavailable
   const textareaRef = useRef()
   const originalRef = useRef(null)
@@ -147,15 +148,19 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
       <Header title={fileName} changed={changed} onHome={onHome} onBack={onClose}>
         <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
           <button
-            className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
+            className={cn('px-2.5 py-1.5 rounded-md transition-colors',
               mode === 'edit' ? 'bg-card text-foreground' : 'text-muted-foreground')}
             onClick={() => setMode('edit')}
-          >Edit</button>
+            aria-label="Markdown"
+            aria-pressed={mode === 'edit'}
+          ><Hash className="size-4" /></button>
           <button
-            className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
+            className={cn('px-2.5 py-1.5 rounded-md transition-colors',
               mode === 'preview' ? 'bg-card text-foreground' : 'text-muted-foreground')}
             onClick={() => setMode('preview')}
-          >Preview</button>
+            aria-label="Preview"
+            aria-pressed={mode === 'preview'}
+          ><PaintBrush className="size-4" /></button>
         </div>
       </Header>
 
