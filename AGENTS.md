@@ -5,6 +5,21 @@
 - **Be concise.** Short sentences. No filler. No summaries of what you just did.
 - **Push to `main` directly.** No pull requests.
 
+## Principles
+1. **One way to do each thing.** Before adding a component, pattern or helper, look for an existing one and reuse or extend it. Two solutions to one problem drift apart and double the bugs.
+2. **One source of truth; derive the rest.** Store the minimum state and compute everything else from it. Never keep a copy that can get out of sync.
+3. **Logic in pure functions, effects in hooks, rendering in components.** Rules about data live in plain, testable functions. Hooks own network, storage and timers. Components only display and forward user actions.
+4. **One path for every write.** All changes go through the same pipeline. Side doors skip the rules everything else follows.
+5. **Never lose the user's work.** Save before acting. After an operation, clear only what you know succeeded. Confirm before destroying. Don't allow editing what can't be saved.
+6. **Assume the network can disappear at any moment.** Every remote call has an offline answer. Tell "offline", "rejected" and "broken" apart and handle each.
+7. **Fail visibly, recover calmly.** Show a clear state for loading, empty, error and offline. Never swallow an error in a way that leaves the screen lying.
+8. **Design system first.** Use the shared components and theme tokens. A one-off style or color is a future inconsistency.
+9. **Small changes, verified before shipping.** Build, run tests, and check the change once in the real app. Test logic, not pixels; keep tests few and meaningful.
+10. **Replace means remove.** When something new replaces something old, delete the old code in the same change.
+
+## Code reviews
+Suggest a full code review from time to time: after a larger feature, or after roughly 10 changes since the last review. Review against the principles above, list findings by priority, and fix only what's confirmed.
+
 React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHub REST API.
 
 ## Design system — shadcn/ui + Tailwind v4
