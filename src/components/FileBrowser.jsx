@@ -1,14 +1,15 @@
 import { useState, useRef } from 'react'
-import { Menu, Plus, FileText, Folder } from 'lucide-react'
+import { Menu, Plus, FileText, Folder, Pencil, Trash2 } from 'lucide-react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
-import ItemActionsModal from './ItemActionsModal.jsx'
+import RenameModal from './RenameModal.jsx'
 import { cn } from '@/lib/utils.js'
 
 export default function FileBrowser({ listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onRefresh, onMenu }) {
   const [path, setPath] = useState('')
   const [breadcrumbs, setBreadcrumbs] = useState([])
-  const [actionItem, setActionItem] = useState(null)
+  const [renameItem, setRenameItem] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(null)
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const pullStart = useRef(null)
@@ -76,7 +77,7 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
               <Plus className="size-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
             <DropdownMenuItem onSelect={() => onNewFile(path, 'note')}><FileText /> New note</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onNewFile(path, 'folder')}><Folder /> New folder</DropdownMenuItem>
           </DropdownMenuContent>
@@ -125,24 +126,40 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
                   <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : '📄'}</span>
                   <span className="flex-1 text-base truncate">{item.name.replace(/\.md$/, '')}</span>
                 </button>
-                <Button variant="ghost" size="icon" onClick={() => setActionItem(item)}
-                  aria-label="More actions" className="shrink-0 text-muted-foreground">⋯</Button>
+                <DropdownMenu onOpenChange={open => !open && setConfirmDelete(null)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="More actions"
+                      className="shrink-0 text-muted-foreground">⋯</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
+                    <DropdownMenuItem onSelect={() => setRenameItem(item)}><Pencil /> Rename</DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={e => {
+                        if (confirmDelete === item.path) return onDelete(item)
+                        e.preventDefault()
+                        setConfirmDelete(item.path)
+                      }}
+                    >
+                      <Trash2 /> {confirmDelete === item.path ? 'Tap again to delete' : 'Delete'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </li>
           ))}
         </ul>
       )}
 
-      {actionItem && (
-        <ItemActionsModal
-          item={actionItem}
+      {renameItem && (
+        <RenameModal
+          item={renameItem}
           onRename={name => {
-            const err = onRename(actionItem, name)
-            if (!err) setActionItem(null)
+            const err = onRename(renameItem, name)
+            if (!err) setRenameItem(null)
             return err
           }}
-          onDelete={() => { onDelete(actionItem); setActionItem(null) }}
-          onClose={() => setActionItem(null)}
+          onClose={() => setRenameItem(null)}
         />
       )}
     </div>

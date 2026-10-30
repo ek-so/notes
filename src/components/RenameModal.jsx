@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from './ui/button.jsx'
 import { Input } from './ui/input.jsx'
 
-export default function ItemActionsModal({ item, onRename, onDelete, onClose }) {
+export default function RenameModal({ item, onRename, onClose }) {
   const isDir = item.type === 'dir'
   const currentName = item.name.replace(/\.md$/, '')
   const [name, setName] = useState(currentName)
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState('')
+  const inputRef = useRef()
+
+  // Wait for the menu that opened this to release focus
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.select())
+    return () => clearTimeout(timer)
+  }, [])
 
   function handleRename(e) {
     e.preventDefault()
@@ -26,10 +32,10 @@ export default function ItemActionsModal({ item, onRename, onDelete, onClose }) 
         className="w-full max-w-[680px] bg-card rounded-t-2xl p-6 flex flex-col gap-4"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold truncate">{isDir ? '📁' : '📄'} {currentName}</h2>
+        <h2 className="text-lg font-bold truncate">Rename {isDir ? 'folder' : 'note'}</h2>
         <form onSubmit={handleRename} className="flex flex-col gap-3">
           <Input
-            autoFocus
+            ref={inputRef}
             type="text"
             value={name}
             onChange={e => { setName(e.target.value); setError('') }}
@@ -38,13 +44,8 @@ export default function ItemActionsModal({ item, onRename, onDelete, onClose }) 
           />
           {error && <p className="text-destructive text-xs">{error}</p>}
           <div className="flex gap-2">
-            <Button
-              type="button"
-              variant={confirmDelete ? 'destructive' : 'secondary'}
-              className="flex-1"
-              onClick={() => confirmDelete ? onDelete() : setConfirmDelete(true)}
-            >
-              {confirmDelete ? (isDir ? 'Delete folder?' : 'Delete note?') : 'Delete'}
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
+              Cancel
             </Button>
             <Button type="submit" disabled={!name.trim()} className="flex-1">Rename</Button>
           </div>

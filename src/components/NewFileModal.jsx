@@ -10,7 +10,11 @@ export default function NewFileModal({ folder, kind, onCreated, onClose }) {
   const [error, setError] = useState('')
   const inputRef = useRef()
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  // Wait for the menu that opened this to release focus
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus())
+    return () => clearTimeout(timer)
+  }, [])
 
   async function handleCreate(e) {
     e.preventDefault()
