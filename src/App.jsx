@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect } from 'react'
+import { ArrowsClockwise, Check, X, Sun, Moon, CloudSlash } from '@phosphor-icons/react'
 import Auth from './components/Auth.jsx'
 import RepoSetup from './components/RepoSetup.jsx'
 import FileBrowser from './components/FileBrowser.jsx'
@@ -6,229 +7,95 @@ import Editor from './components/Editor.jsx'
 import PullToRefresh from './components/PullToRefresh.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
-import { init, setRepo, getUser, getTree, getBlob, commitTree } from './lib/github.js'
-import { storage, localChanges, legacyDrafts } from './lib/storage.js'
-import {
-  empty, count, virtualFiles, listDir, changedPaths, splitName, exists, setEdit, rename, remove,
-  conflicts, discard, treeEntries, commitMessage,
-} from './lib/changes.js'
-
-function getEffectiveTheme() {
-  const saved = storage.getTheme()
-  if (saved) return saved
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme)
-}
-import { ArrowsClockwise, Check, X, Sun, Moon } from '@phosphor-icons/react'
+import BottomSheet from './components/BottomSheet.jsx'
 import { Button } from './components/ui/button.jsx'
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './components/ui/sheet.jsx'
+import { useAuth } from './hooks/useAuth.js'
+import { useRepo } from './hooks/useRepo.js'
+import { useTheme } from './hooks/useTheme.js'
+import { storage } from './lib/storage.js'
+import { cache } from './lib/cache.js'
+import { listDir, splitName, exists, nameError, add, setEdit, rename, remove } from './lib/changes.js'
 import { cn } from '@/lib/utils.js'
 
 export default function App() {
-  const [user, setUser] = useState(null)
-  const [repo, setRepoState] = useState(null)
-  const [ready, setReady] = useState(false)
+  const auth = useAuth()
+  const repo = useRepo(auth.user ? auth.repo : null)
+  const { theme, toggleTheme } = useTheme()
   const [selectedFile, setSelectedFile] = useState(storage.getFile)
   const [folder, setFolder] = useState(storage.getFolder)
-  const [newFileFolder, setNewFileFolder] = useState(null)
-  const [newFileKind, setNewFileKind] = useState('note')
-  const [showNewFile, setShowNewFile] = useState(false)
-  const [remote, setRemote] = useState(null)
-  const [remoteError, setRemoteError] = useState('')
-  const [changes, setChanges] = useState(empty)
-  const changesRef = useRef(changes)
-  const [conflictPaths, setConflictPaths] = useState([])
-  const [syncing, setSyncing] = useState(false)
+  const [newFile, setNewFile] = useState(null) // { folder, kind } while the sheet is open
   const [menuOpen, setMenuOpen] = useState(false)
-  const [syncState, setSyncState] = useState('idle') // idle | done | error
-  const [theme, setTheme] = useState(() => {
-    const t = getEffectiveTheme()
-    applyTheme(t)
-    return t
-  })
-
-  function toggleTheme() {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    applyTheme(next)
-    storage.setTheme(next)
-    setTheme(next)
-  }
-
-  useEffect(() => {
-    const token = storage.getToken()
-    const savedRepo = storage.getRepo()
-    if (token) {
-      init(token)
-      const doAuth = async () => {
-        try {
-          const u = await getUser()
-          setUser(u)
-          if (savedRepo) {
-            const slashIdx = savedRepo.indexOf('/')
-            setRepo(savedRepo.slice(0, slashIdx), savedRepo.slice(slashIdx + 1))
-            setRepoState(savedRepo)
-          }
-        } catch {
-          storage.clearToken()
-          storage.clearRepo()
-        }
-        setReady(true)
-      }
-      doAuth()
-    } else {
-      setReady(true)
-    }
-  }, [])
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
 
   useEffect(() => { storage.setFolder(folder) }, [folder])
   useEffect(() => { storage.setFile(selectedFile) }, [selectedFile])
 
-  useEffect(() => {
-    if (!user || !repo) return
-    changesRef.current = localChanges.get(repo) || empty()
-    setChanges(changesRef.current)
-    setRemote(null)
-    load()
-  }, [user, repo])
+  const { virtual, changes, update } = repo
 
-  const virtual = useMemo(
-    () => remote ? virtualFiles(remote.files, changes) : {},
-    [remote, changes]
-  )
-  const changeCount = count(changes)
-  const changed = useMemo(() => changedPaths(changes), [changes])
-
-  function updateChanges(fn) {
-    const next = fn(changesRef.current)
-    changesRef.current = next
-    localChanges.set(repo, next)
-    setChanges(next)
-  }
-
-  async function pull() {
-    const latest = await getTree()
-    setRemote(latest)
-    return latest
-  }
-
-  async function load() {
-    setRemoteError('')
-    try {
-      const latest = await pull()
-      await migrateDrafts(latest)
-      setConflictPaths(conflicts(changesRef.current, latest.files))
-    } catch {
-      setRemoteError('Failed to load files.')
-    }
-  }
-
-  // Keep only old drafts that really differ from GitHub
-  async function migrateDrafts(latest) {
-    for (const [path, content] of Object.entries(legacyDrafts.all())) {
-      const file = latest.files[path]
-      if (!file) continue
-      if (!(path in changesRef.current.edits)) {
-        const original = await getBlob(file.sha)
-        updateChanges(ch => setEdit(ch, { orig: path, sha: file.sha }, content, original))
-      }
-      legacyDrafts.clear(path)
-    }
-  }
-
-  function flash(state) {
-    setSyncState(state)
-    setTimeout(() => setSyncState('idle'), 2000)
-  }
-
-  async function push(latest) {
-    const ch = changesRef.current
-    if (!count(ch)) return
-    await commitTree(latest, treeEntries(ch, latest.files), commitMessage(ch))
-    updateChanges(() => empty())
-    await pull()
-  }
-
-  async function sync() {
-    if (syncing) return
-    window.dispatchEvent(new Event('folio:flush'))
-    setSyncing(true)
-    try {
-      const latest = await pull()
-      const conflicted = conflicts(changesRef.current, latest.files)
-      if (conflicted.length) setConflictPaths(conflicted)
-      else {
-        await push(latest)
-        flash('done')
-      }
-    } catch {
-      flash('error')
-    }
-    setSyncing(false)
-  }
-
-  async function pushLocal() {
-    setSyncing(true)
-    try {
-      await push(await pull())
-      setConflictPaths([])
-      flash('done')
-    } catch {
-      flash('error')
-    }
-    setSyncing(false)
-  }
-
-  function takeRemote() {
-    updateChanges(ch => discard(ch, conflictPaths))
-    setConflictPaths([])
+  // A remote path whose original name is taken by a local rename can't be
+  // reused until that rename is synced.
+  function pathError(path) {
+    if (exists(virtual, path)) return 'That name is already taken.'
+    if (changes.moves[path]) return 'Sync first: a renamed item used this name.'
+    return null
   }
 
   function handleRename(item, name) {
-    if (name.includes('/')) return 'Name can\'t contain "/".'
+    const error = nameError(name)
+    if (error) return error
     const parent = item.path.slice(0, item.path.lastIndexOf('/') + 1)
     const to = parent + name + (item.type === 'dir' ? '' : splitName(item.name)[1])
     if (exists(virtual, to)) return 'That name is already taken.'
-    updateChanges(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
+    // A path freed by an unsynced rename/delete would clash in one commit
+    const moving = item.type === 'dir'
+      ? Object.keys(virtual).filter(p => p.startsWith(item.path + '/'))
+      : [item.path]
+    const clash = moving.some(p => {
+      const target = to + p.slice(item.path.length)
+      return target in changes.moves && target !== virtual[p].orig
+    })
+    if (clash) return 'Sync first: a renamed or deleted item just used this name.'
+    update(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
     return null
   }
 
   function handleDelete(item) {
     if (selectedFile === item.path || selectedFile?.startsWith(item.path + '/')) setSelectedFile(null)
-    updateChanges(ch => remove(ch, virtual, item.path, item.type === 'dir'))
+    update(ch => remove(ch, virtual, item.path, item.type === 'dir'))
   }
 
-  async function handleCreated(path) {
-    setShowNewFile(false)
-    try { await pull() } catch {}
-    if (newFileKind === 'note') setSelectedFile(path)
+  function handleCreate(name) {
+    if (!repo.remote) return 'Files are still loading.'
+    const error = nameError(name)
+    if (error) return error
+    const base = newFile.folder ? `${newFile.folder}/${name}` : name
+    if (newFile.kind === 'folder') {
+      const err = pathError(base) || pathError(`${base}/.gitkeep`)
+      if (err) return err
+      update(ch => add(ch, repo.remote.files, `${base}/.gitkeep`, ''))
+    } else {
+      const path = `${base}.md`
+      const err = pathError(path)
+      if (err) return err
+      update(ch => add(ch, repo.remote.files, path, `# ${name}\n\n`))
+      setSelectedFile(path)
+    }
+    setNewFile(null)
+    return null
   }
 
-  async function authenticate(token) {
-    init(token)
-    const u = await getUser()
-    storage.setToken(token)
-    setUser(u)
-  }
-
-  function onRepo(ownerVal, repoVal) {
-    const full = `${ownerVal}/${repoVal}`
-    storage.setRepo(full)
-    setRepoState(full)
-  }
-
-  function logout() {
-    storage.clearToken()
-    storage.clearRepo()
-    setUser(null)
-    setRepoState(null)
+  async function signOut() {
+    setConfirmSignOut(false)
+    setMenuOpen(false)
+    repo.discardAll()
+    await cache.clearAll()
+    auth.signOut()
     setSelectedFile(null)
     setFolder('')
   }
 
-  if (!ready) {
+  if (!auth.ready) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
         <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
@@ -236,21 +103,24 @@ export default function App() {
     )
   }
 
-  if (!user) return <Auth onAuth={authenticate} />
-  if (!repo) return <RepoSetup user={user} onRepo={onRepo} onLogout={logout} />
+  if (!auth.user) return <Auth onAuth={auth.authenticate} />
+  if (!auth.repo) return <RepoSetup user={auth.user} onRepo={auth.selectRepo} onLogout={auth.signOut} />
+
+  const entry = selectedFile && virtual[selectedFile]
+  const { syncState, syncing } = repo
 
   return (
     <div className="flex flex-col h-full max-w-[680px] mx-auto bg-background">
       <PullToRefresh onRefresh={() => window.location.reload()}>
-        {selectedFile && virtual[selectedFile] ? (
+        {entry ? (
           <Editor
             key={selectedFile}
             path={selectedFile}
-            entry={virtual[selectedFile]}
+            entry={entry}
             files={virtual}
-            edited={changes.edits[virtual[selectedFile].orig]}
+            edited={changes.edits[entry.orig]}
             onEdit={(content, original) =>
-              updateChanges(ch => setEdit(ch, virtual[selectedFile], content, original))}
+              update(ch => setEdit(ch, virtual[selectedFile], content, original))}
             onClose={() => setSelectedFile(null)}
             onHome={() => { setFolder(''); setSelectedFile(null) }}
           />
@@ -258,36 +128,42 @@ export default function App() {
           <FileBrowser
             path={folder}
             onNavigate={setFolder}
-            listDir={dir => listDir(virtual, dir, changed)}
-            loading={!remote && !remoteError}
-            error={remoteError}
+            listDir={dir => listDir(virtual, dir, repo.changed)}
+            loading={!repo.remote && !repo.error}
+            error={repo.error}
+            notice={repo.remote?.truncated ? 'This repo is too large to list in full; some files are missing.' : ''}
             onRename={handleRename}
             onDelete={handleDelete}
             onMenu={() => setMenuOpen(true)}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
-            onNewFile={(f, kind) => { setNewFileFolder(f || ''); setNewFileKind(kind); setShowNewFile(true) }}
-            repo={repo}
+            onNewFile={(f, kind) => setNewFile({ folder: f, kind })}
+            repo={auth.repo}
           />
         )}
       </PullToRefresh>
+
       <div
-        className="flex items-center justify-end px-4 py-3 border-t border-border bg-background shrink-0"
+        className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border bg-background shrink-0"
         style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
       >
+        <span className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', repo.online && 'invisible')}>
+          <CloudSlash className="size-4" /> Offline
+        </span>
         <Button
-          onClick={sync}
+          onClick={repo.sync}
           disabled={syncing}
           variant={syncState === 'error' ? 'destructive' : 'default'}
           className="gap-2"
         >
           {syncState === 'done' ? <Check className="size-4" />
             : syncState === 'error' ? <X className="size-4" />
+            : syncState === 'offline' ? <CloudSlash className="size-4" />
             : <ArrowsClockwise className={cn('size-4', syncing && 'animate-spin')} />}
-          {syncState === 'done' ? 'Synced' : syncState === 'error' ? 'Failed' : 'Sync'}
-          {changeCount > 0 && syncState === 'idle' && !syncing && (
+          {{ done: 'Synced', error: 'Failed', offline: 'Offline' }[syncState] || 'Sync'}
+          {repo.changeCount > 0 && syncState === 'idle' && !syncing && (
             <span className="bg-primary-foreground text-primary rounded-full text-[11px] min-w-5 h-5 px-1 flex items-center justify-center font-semibold">
-              {changeCount}
+              {repo.changeCount}
             </span>
           )}
         </Button>
@@ -296,8 +172,8 @@ export default function App() {
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
           <SheetHeader>
-            <SheetTitle>@{user.login}</SheetTitle>
-            <SheetDescription>{repo}</SheetDescription>
+            <SheetTitle>@{auth.user.login}</SheetTitle>
+            <SheetDescription>{auth.repo}</SheetDescription>
           </SheetHeader>
           <div className="px-2">
             <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
@@ -305,27 +181,43 @@ export default function App() {
             </Button>
           </div>
           <SheetFooter>
-            <Button variant="outline" onClick={() => { setMenuOpen(false); logout() }}>Sign out</Button>
+            <Button
+              variant="outline"
+              onClick={() => repo.changeCount ? setConfirmSignOut(true) : signOut()}
+            >Sign out</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
 
-      {showNewFile && (
+      {confirmSignOut && (
+        <BottomSheet
+          title="Sign out?"
+          description={`You have ${repo.changeCount} unsynced change${repo.changeCount === 1 ? '' : 's'}. Signing out deletes them from this device.`}
+          onClose={() => setConfirmSignOut(false)}
+        >
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setConfirmSignOut(false)}>Cancel</Button>
+            <Button variant="destructive" className="flex-1" onClick={signOut}>Sign out</Button>
+          </div>
+        </BottomSheet>
+      )}
+
+      {newFile && (
         <NewFileModal
-          folder={newFileFolder}
-          kind={newFileKind}
-          onCreated={handleCreated}
-          onClose={() => setShowNewFile(false)}
+          folder={newFile.folder}
+          kind={newFile.kind}
+          onCreate={handleCreate}
+          onClose={() => setNewFile(null)}
         />
       )}
 
-      {conflictPaths.length > 0 && (
+      {repo.conflictPaths.length > 0 && (
         <ConflictModal
-          paths={conflictPaths}
+          paths={repo.conflictPaths}
           busy={syncing}
-          onPushLocal={pushLocal}
-          onUseRemote={takeRemote}
-          onClose={() => setConflictPaths([])}
+          onPushLocal={repo.pushLocal}
+          onUseRemote={repo.takeRemote}
+          onClose={repo.dismissConflicts}
         />
       )}
     </div>

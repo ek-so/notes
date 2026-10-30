@@ -19,7 +19,8 @@ const buttonVariants = cva(
         default: 'h-9 px-4 py-2',
         sm: 'h-8 rounded-md px-3 text-xs',
         lg: 'h-10 rounded-md px-8',
-        icon: 'h-9 w-9',
+        // 36px visually, 44px tap area
+        icon: "relative h-9 w-9 after:absolute after:-inset-1 after:content-['']",
       },
     },
     defaultVariants: {

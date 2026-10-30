@@ -1,0 +1,74 @@
+import { describe, it, expect } from 'vitest'
+import {
+  empty, count, virtualFiles, add, setEdit, rename, remove, conflicts, settle, treeEntries,
+} from './changes.js'
+
+const files = {
+  'a.md': { sha: 'a1', mode: '100644' },
+  'dir/x.md': { sha: 'x1', mode: '100644' },
+}
+const view = ch => virtualFiles(files, ch)
+
+describe('changes', () => {
+  it('only counts real edits', () => {
+    let ch = setEdit(empty(), view(empty())['a.md'], 'same', 'same')
+    expect(count(ch)).toBe(0)
+    ch = setEdit(ch, view(ch)['a.md'], 'new', 'old')
+    expect(count(ch)).toBe(1)
+    ch = setEdit(ch, view(ch)['a.md'], 'old', 'old')
+    expect(count(ch)).toBe(0)
+  })
+
+  it('renames a folder and back', () => {
+    let ch = rename(empty(), view(empty()), 'dir', 'other', true)
+    expect(Object.keys(view(ch))).toContain('other/x.md')
+    ch = rename(ch, view(ch), 'other', 'dir', true)
+    expect(count(ch)).toBe(0)
+  })
+
+  it('creates files locally and forgets them when deleted', () => {
+    let ch = add(empty(), files, 'new.md', '# new')
+    expect(view(ch)['new.md']).toMatchObject({ sha: null })
+    ch = setEdit(ch, view(ch)['new.md'], '', '')
+    expect(count(ch)).toBe(1) // a new file stays even when emptied
+    ch = remove(ch, view(ch), 'new.md', false)
+    expect(count(ch)).toBe(0)
+  })
+
+  it('flags conflicts, including a new file whose path appeared on GitHub', () => {
+    let ch = setEdit(empty(), view(empty())['a.md'], 'mine', 'old')
+    ch = add(ch, files, 'b.md', 'b')
+    expect(conflicts(ch, files)).toEqual([])
+    const remote = { ...files, 'a.md': { sha: 'a2' }, 'b.md': { sha: 'b1' } }
+    expect(conflicts(ch, remote).sort()).toEqual(['a.md', 'b.md'])
+  })
+
+  it('builds tree entries for edit, move and delete', () => {
+    let ch = setEdit(empty(), view(empty())['a.md'], 'text', 'old')
+    ch = rename(ch, view(ch), 'a.md', 'b.md', false)
+    ch = remove(ch, view(ch), 'dir/x.md', false)
+    expect(treeEntries(ch, files)).toEqual([
+      { path: 'a.md', mode: '100644', type: 'blob', sha: null },
+      { path: 'b.md', mode: '100644', type: 'blob', content: 'text' },
+      { path: 'dir/x.md', mode: '100644', type: 'blob', sha: null },
+    ])
+  })
+
+  it('settle keeps edits made while a commit was in flight', () => {
+    const committed = setEdit(empty(), view(empty())['a.md'], 'v1', 'old')
+    const current = setEdit(committed, virtualFiles(files, committed)['a.md'], 'v2', 'old')
+    const after = { ...files, 'a.md': { sha: 'a-v1' } }
+    const next = settle(current, committed, after)
+    expect(next.edits).toEqual({ 'a.md': 'v2' })
+    expect(next.base).toEqual({ 'a.md': 'a-v1' })
+    expect(count(settle(committed, committed, after))).toBe(0)
+  })
+
+  it('settle re-keys a renamed file to its new path', () => {
+    const committed = rename(empty(), view(empty()), 'a.md', 'b.md', false)
+    const current = setEdit(committed, virtualFiles(files, committed)['b.md'], 'edited', 'old')
+    const after = { 'b.md': { sha: 'b1' }, 'dir/x.md': files['dir/x.md'] }
+    const next = settle(current, committed, after)
+    expect(next).toEqual({ edits: { 'b.md': 'edited' }, moves: {}, base: { 'b.md': 'b1' } })
+  })
+})

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { setRepo, listContents } from '../lib/github.js'
+import { setRepo, checkRepo } from '../lib/github.js'
 import { Button } from './ui/button.jsx'
 import { Input } from './ui/input.jsx'
 
@@ -22,8 +22,8 @@ export default function RepoSetup({ user, onRepo, onLogout }) {
     setError('')
     setRepo(ownerVal, repoVal)
     try {
-      await listContents('')
-      onRepo(ownerVal, repoVal)
+      await checkRepo()
+      onRepo(`${ownerVal}/${repoVal}`)
     } catch {
       setError("Can't access that repo. Check the name and token permissions.")
       setLoading(false)

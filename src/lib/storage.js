@@ -1,78 +1,50 @@
 const TOKEN_KEY = 'brain_gh_token'
 const REPO_KEY = 'brain_gh_repo'
+const USER_KEY = 'folio_user'
 const THEME_KEY = 'folio_theme'
 const FOLDER_KEY = 'folio_folder'
 const FILE_KEY = 'folio_file'
-const DRAFT_PREFIX = 'folio_draft_'
 const CHANGES_KEY = 'folio_changes_'
 
+function read(store, key) {
+  try { return store.getItem(key) } catch { return null }
+}
+
+function write(store, key, value) {
+  try {
+    if (value === null || value === undefined) store.removeItem(key)
+    else store.setItem(key, value)
+  } catch {}
+}
+
 export const storage = {
-  getToken: () => {
-    try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+  getToken: () => read(localStorage, TOKEN_KEY),
+  setToken: (token) => write(localStorage, TOKEN_KEY, token),
+  getRepo: () => read(localStorage, REPO_KEY),
+  setRepo: (repo) => write(localStorage, REPO_KEY, repo),
+  // Last signed-in GitHub user, so the app can start offline
+  getUser: () => {
+    try { return JSON.parse(read(localStorage, USER_KEY)) } catch { return null }
   },
-  setToken: (token) => {
-    try { localStorage.setItem(TOKEN_KEY, token) } catch {}
-  },
-  clearToken: () => {
-    try { localStorage.removeItem(TOKEN_KEY) } catch {}
-  },
-  getRepo: () => {
-    try { return localStorage.getItem(REPO_KEY) } catch { return null }
-  },
-  setRepo: (repo) => {
-    try { localStorage.setItem(REPO_KEY, repo) } catch {}
-  },
-  clearRepo: () => {
-    try { localStorage.removeItem(REPO_KEY) } catch {}
-  },
-  getTheme: () => {
-    try { return localStorage.getItem(THEME_KEY) } catch { return null }
-  },
-  setTheme: (theme) => {
-    try { localStorage.setItem(THEME_KEY, theme) } catch {}
-  },
-  // Session-only, so a reload keeps the current folder
-  getFolder: () => {
-    try { return sessionStorage.getItem(FOLDER_KEY) || '' } catch { return '' }
-  },
-  setFolder: (folder) => {
-    try { sessionStorage.setItem(FOLDER_KEY, folder) } catch {}
-  },
-  getFile: () => {
-    try { return sessionStorage.getItem(FILE_KEY) || null } catch { return null }
-  },
-  setFile: (path) => {
-    try {
-      if (path) sessionStorage.setItem(FILE_KEY, path)
-      else sessionStorage.removeItem(FILE_KEY)
-    } catch {}
+  setUser: (user) => write(localStorage, USER_KEY, user && JSON.stringify({ login: user.login })),
+  getTheme: () => read(localStorage, THEME_KEY),
+  setTheme: (theme) => write(localStorage, THEME_KEY, theme),
+  // Session-only, so a reload keeps the current folder and open note
+  getFolder: () => read(sessionStorage, FOLDER_KEY) || '',
+  setFolder: (folder) => write(sessionStorage, FOLDER_KEY, folder),
+  getFile: () => read(sessionStorage, FILE_KEY),
+  setFile: (path) => write(sessionStorage, FILE_KEY, path),
+  // Everything tied to the signed-in account; theme stays
+  clearSession: () => {
+    for (const key of [TOKEN_KEY, REPO_KEY, USER_KEY]) write(localStorage, key, null)
+    for (const key of [FOLDER_KEY, FILE_KEY]) write(sessionStorage, key, null)
   },
 }
 
 export const localChanges = {
   get: (repo) => {
-    try { return JSON.parse(localStorage.getItem(CHANGES_KEY + repo)) } catch { return null }
+    try { return JSON.parse(read(localStorage, CHANGES_KEY + repo)) } catch { return null }
   },
-  set: (repo, changes) => {
-    try { localStorage.setItem(CHANGES_KEY + repo, JSON.stringify(changes)) } catch {}
-  },
-}
-
-// Per-file drafts from older versions. Migrated into localChanges on load.
-export const legacyDrafts = {
-  all: () => {
-    try {
-      const result = {}
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (key?.startsWith(DRAFT_PREFIX)) {
-          result[key.slice(DRAFT_PREFIX.length)] = localStorage.getItem(key)
-        }
-      }
-      return result
-    } catch { return {} }
-  },
-  clear: (path) => {
-    try { localStorage.removeItem(DRAFT_PREFIX + path) } catch {}
-  },
+  set: (repo, changes) => write(localStorage, CHANGES_KEY + repo, JSON.stringify(changes)),
+  clear: (repo) => write(localStorage, CHANGES_KEY + repo, null),
 }

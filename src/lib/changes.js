@@ -2,8 +2,9 @@
 // file's original (remote) path so edits survive renames:
 //   edits: { origPath: content }
 //   moves: { origPath: newPath | null }   null = deleted
-//   base:  { origPath: blobSha }          remote sha when first touched
-// A path is in `base` only while it has an edit or a move.
+//   base:  { origPath: blobSha | null }   remote sha when first touched;
+//                                         null = created locally
+// A path is in `base` only while it has an edit or a move (or is new).
 
 export const empty = () => ({ edits: {}, moves: {}, base: {} })
 
@@ -19,6 +20,8 @@ function tidy(ch, orig) {
   if (!(orig in ch.edits) && !(orig in ch.moves)) delete ch.base[orig]
 }
 
+const targetOf = (ch, orig) => orig in ch.moves ? ch.moves[orig] : orig
+
 function clone(ch) {
   return { edits: { ...ch.edits }, moves: { ...ch.moves }, base: { ...ch.base } }
 }
@@ -28,7 +31,7 @@ export function virtualFiles(files, ch) {
   const result = {}
   const origs = new Set([...Object.keys(files), ...Object.keys(ch.base)])
   for (const orig of origs) {
-    const target = orig in ch.moves ? ch.moves[orig] : orig
+    const target = targetOf(ch, orig)
     if (target === null) continue
     const sha = orig in ch.base ? ch.base[orig] : files[orig].sha
     result[target] = { orig, sha, mode: files[orig]?.mode || '100644' }
@@ -47,7 +50,7 @@ export function changedPaths(ch) {
     }
   }
   for (const orig of Object.keys(ch.base)) {
-    const target = orig in ch.moves ? ch.moves[orig] : orig
+    const target = targetOf(ch, orig)
     if (target !== null) addWithParents(target)
     if (target !== orig) {
       const slash = orig.lastIndexOf('/')
@@ -97,9 +100,28 @@ function affected(virtual, path, isDir) {
   return Object.entries(virtual).filter(([p]) => p.startsWith(path + '/'))
 }
 
+// Problem with a new file or folder name, or null if it's fine.
+export function nameError(name) {
+  if (!name) return 'Enter a name.'
+  if (name.includes('/')) return 'Name can\'t contain "/".'
+  if (name.startsWith('.')) return 'Name can\'t start with ".".'
+  return null
+}
+
+// Adds a file created on this device. Recreating a path that exists on
+// GitHub (deleted locally) turns into an edit of that file.
+export function add(ch, files, path, content) {
+  const next = clone(ch)
+  delete next.moves[path]
+  next.edits[path] = content
+  touch(next, path, files[path]?.sha ?? null)
+  return next
+}
+
 export function setEdit(ch, entry, content, original) {
   const next = clone(ch)
-  if (content === original) delete next.edits[entry.orig]
+  // A new file stays even when emptied; it only goes away when deleted
+  if (content === original && entry.sha !== null) delete next.edits[entry.orig]
   else {
     next.edits[entry.orig] = content
     touch(next, entry.orig, entry.sha)
@@ -126,15 +148,21 @@ export function remove(ch, virtual, path, isDir) {
   const next = clone(ch)
   for (const [, entry] of affected(virtual, path, isDir)) {
     delete next.edits[entry.orig]
-    next.moves[entry.orig] = null
-    touch(next, entry.orig, entry.sha)
+    if (next.base[entry.orig] === null) {
+      // Never reached GitHub: just forget it
+      delete next.moves[entry.orig]
+      delete next.base[entry.orig]
+    } else {
+      next.moves[entry.orig] = null
+      touch(next, entry.orig, entry.sha)
+    }
   }
   return next
 }
 
 // Touched files whose remote version changed since they were touched.
 export function conflicts(ch, files) {
-  return Object.keys(ch.base).filter(orig => files[orig]?.sha !== ch.base[orig])
+  return Object.keys(ch.base).filter(orig => (files[orig]?.sha ?? null) !== ch.base[orig])
 }
 
 export function discard(ch, origs) {
@@ -147,11 +175,33 @@ export function discard(ch, origs) {
   return next
 }
 
+// After `committed` was pushed and GitHub now has `files`: drop what was
+// committed from `current`, keeping anything changed since the commit
+// started (re-keyed to where the file now lives on GitHub).
+export function settle(current, committed, files) {
+  const next = clone(current)
+  for (const orig of Object.keys(committed.base)) {
+    if (!(orig in current.base)) continue
+    const pushedTarget = targetOf(committed, orig)
+    const nowTarget = targetOf(current, orig)
+    const editChanged = orig in current.edits && current.edits[orig] !== committed.edits[orig]
+    const moveChanged = nowTarget !== pushedTarget
+    delete next.edits[orig]
+    delete next.moves[orig]
+    delete next.base[orig]
+    if (pushedTarget === null || (!editChanged && !moveChanged)) continue
+    if (editChanged) next.edits[pushedTarget] = current.edits[orig]
+    if (moveChanged) next.moves[pushedTarget] = nowTarget
+    next.base[pushedTarget] = files[pushedTarget]?.sha ?? null
+  }
+  return next
+}
+
 // Tree entries (for the Git Data API) that apply all changes onto `files`.
 export function treeEntries(ch, files) {
   const entries = []
   for (const orig of Object.keys(ch.base)) {
-    const target = orig in ch.moves ? ch.moves[orig] : orig
+    const target = targetOf(ch, orig)
     const mode = files[orig]?.mode || '100644'
     if (target !== orig && files[orig]) {
       entries.push({ path: orig, mode, type: 'blob', sha: null })
@@ -167,8 +217,11 @@ const shortName = p => p.split('/').pop().replace(/\.md$/, '')
 
 export function commitMessage(ch) {
   const lines = Object.keys(ch.base).map(orig => {
-    const target = orig in ch.moves ? ch.moves[orig] : orig
+    const target = targetOf(ch, orig)
     if (target === null) return `Delete ${shortName(orig)}`
+    if (ch.base[orig] === null) {
+      return target.endsWith('/.gitkeep') ? `Create folder ${target.slice(0, -9)}` : `Create ${shortName(target)}`
+    }
     if (target !== orig) return `Rename ${orig} → ${target}`
     return `Update ${shortName(orig)}`
   })

@@ -10,16 +10,14 @@ import { splitName } from '../lib/changes.js'
 
 const IMAGE = /^\.(png|jpe?g|gif|webp|svg|heic|avif|bmp)$/i
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onMenu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onMenu }) {
   const [renameItem, setRenameItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
-  const items = loading || error ? [] : listDir(path)
+  const items = loading ? [] : listDir(path)
 
   function navigate(item) {
     if (item.type === 'dir') onNavigate(item.path)
-    else {
-      onSelect(item.path)
-    }
+    else onSelect(item.path)
   }
 
   function goBack() {
@@ -55,7 +53,8 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
           <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
         </div>
       )}
-      {error && <p className="text-destructive text-sm text-center py-12 px-4">{error}</p>}
+      {error && <p className="text-destructive text-sm text-center pt-4 px-4">{error}</p>}
+      {notice && <p className="text-muted-foreground text-xs text-center pt-3 px-4">{notice}</p>}
       {!loading && !error && items.length === 0 && (
         <p className="text-muted-foreground text-sm text-center py-12">No notes yet</p>
       )}

@@ -1,0 +1,176 @@
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { getTree, getBlobBase64, commitTree, isNetworkError } from '../lib/github.js'
+import { cache } from '../lib/cache.js'
+import { localChanges } from '../lib/storage.js'
+import {
+  empty, count, virtualFiles, changedPaths, conflicts, discard, settle, treeEntries, commitMessage,
+} from '../lib/changes.js'
+
+const PREFETCH_WORKERS = 4
+
+// Download every note not yet on this device, so all of them open offline.
+async function prefetchNotes(files) {
+  const shas = [...new Set(
+    Object.entries(files).filter(([path]) => path.endsWith('.md')).map(([, f]) => f.sha)
+  )]
+  const queue = []
+  for (const sha of shas) if (!(await cache.hasBlob(sha))) queue.push(sha)
+  const worker = async () => {
+    while (queue.length) {
+      try { await getBlobBase64(queue.pop()) } catch { return }
+    }
+  }
+  await Promise.all(Array.from({ length: PREFETCH_WORKERS }, worker))
+}
+
+// Remote tree + local changes for one repo, and syncing between them.
+// Works offline from the last tree and notes saved on this device.
+export function useRepo(repo) {
+  const [remote, setRemote] = useState(null)
+  const remoteRef = useRef(null)
+  const [error, setError] = useState('')
+  const [online, setOnline] = useState(() => navigator.onLine)
+  const [changes, setChanges] = useState(empty)
+  const changesRef = useRef(changes)
+  const [conflictPaths, setConflictPaths] = useState([])
+  const [syncing, setSyncing] = useState(false)
+  const [syncState, setSyncState] = useState('idle') // idle | done | error | offline
+  const flashTimer = useRef()
+
+  useEffect(() => {
+    if (!repo) return
+    changesRef.current = localChanges.get(repo) || empty()
+    setChanges(changesRef.current)
+    setRemoteTree(null)
+    setError('')
+    let cancelled = false
+    cache.getTree(repo).then(tree => {
+      if (cancelled) return
+      if (tree && !remoteRef.current) setRemoteTree(tree)
+      refresh()
+    })
+    return () => { cancelled = true }
+  }, [repo])
+
+  useEffect(() => {
+    const goOnline = () => { setOnline(true); refresh() }
+    const goOffline = () => setOnline(false)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+    }
+  }, [repo])
+
+  useEffect(() => () => clearTimeout(flashTimer.current), [])
+
+  const virtual = useMemo(() => remote ? virtualFiles(remote.files, changes) : {}, [remote, changes])
+  const changed = useMemo(() => changedPaths(changes), [changes])
+
+  function setRemoteTree(tree) {
+    remoteRef.current = tree
+    setRemote(tree)
+  }
+
+  function update(fn) {
+    const next = fn(changesRef.current)
+    changesRef.current = next
+    localChanges.set(repo, next)
+    setChanges(next)
+  }
+
+  async function pull() {
+    const latest = await getTree()
+    setRemoteTree(latest)
+    setOnline(true)
+    cache.setTree(repo, latest)
+    prefetchNotes(latest.files)
+    return latest
+  }
+
+  function handleError(e) {
+    if (!isNetworkError(e)) return setError('Failed to load files.')
+    setOnline(false)
+    if (!remoteRef.current) setError('You\'re offline, and this repo isn\'t saved on this device yet.')
+  }
+
+  // Fetch the latest tree; warn about conflicts with local changes
+  async function refresh() {
+    try {
+      const latest = await pull()
+      setError('')
+      setConflictPaths(conflicts(changesRef.current, latest.files))
+    } catch (e) {
+      handleError(e)
+    }
+  }
+
+  function flash(state) {
+    clearTimeout(flashTimer.current)
+    setSyncState(state)
+    flashTimer.current = setTimeout(() => setSyncState('idle'), 2000)
+  }
+
+  // Commit all local changes on top of `latest`. Changes made while the
+  // commit was in flight are kept.
+  async function push(latest) {
+    const committed = changesRef.current
+    if (!count(committed)) return
+    await commitTree(latest, treeEntries(committed, latest.files), commitMessage(committed))
+    const after = await pull()
+    update(current => settle(current, committed, after.files))
+  }
+
+  // Runs a sync step, showing its outcome on the Sync button. A task
+  // returning false ends without a "done" flash (e.g. stopped for conflicts).
+  async function run(task) {
+    setSyncing(true)
+    try {
+      if (await task() !== false) flash('done')
+    } catch (e) {
+      if (isNetworkError(e)) setOnline(false)
+      flash(isNetworkError(e) ? 'offline' : 'error')
+    }
+    setSyncing(false)
+  }
+
+  function sync() {
+    if (syncing) return
+    window.dispatchEvent(new Event('folio:flush'))
+    return run(async () => {
+      const latest = await pull()
+      setError('')
+      const conflicted = conflicts(changesRef.current, latest.files)
+      if (conflicted.length) {
+        setConflictPaths(conflicted)
+        return false
+      }
+      await push(latest)
+    })
+  }
+
+  function pushLocal() {
+    return run(async () => {
+      await push(await pull())
+      setConflictPaths([])
+    })
+  }
+
+  function takeRemote() {
+    update(ch => discard(ch, conflictPaths))
+    setConflictPaths([])
+  }
+
+  function discardAll() {
+    localChanges.clear(repo)
+    changesRef.current = empty()
+    setChanges(changesRef.current)
+  }
+
+  return {
+    remote, error, online, virtual, changes, changed, changeCount: count(changes),
+    conflictPaths, dismissConflicts: () => setConflictPaths([]),
+    syncing, syncState, update, sync, pushLocal, takeRemote, discardAll,
+  }
+}

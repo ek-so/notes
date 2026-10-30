@@ -42,15 +42,6 @@
 
     --radius: 0.75rem;
 
-    /* Legacy tokens for App.css markdown styles */
-    --bg: #f8f8f8;
-    --bg2: #efefef;
-    --bg3: #e6e6e6;
-    --text: #1a1a1a;
-    --text2: #666;
-    --accent-dim: #d3e3f5;
-    --danger: #e05252;
-    --success: #4caf7d;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -85,13 +76,6 @@
       --border: oklch(0.22 0 0);
       --input: oklch(0.22 0 0);
       --ring: oklch(0.55 0.13 240);
-
-      --bg: #0f0f0f;
-      --bg2: #1a1a1a;
-      --bg3: #252525;
-      --text: #e8e8e8;
-      --text2: #888;
-      --accent-dim: #1f3550;
     }
   }
 
@@ -124,13 +108,6 @@
     --border: oklch(0.22 0 0);
     --input: oklch(0.22 0 0);
     --ring: oklch(0.55 0.13 240);
-
-    --bg: #0f0f0f;
-    --bg2: #1a1a1a;
-    --bg3: #252525;
-    --text: #e8e8e8;
-    --text2: #888;
-    --accent-dim: #1f3550;
   }
 }
 

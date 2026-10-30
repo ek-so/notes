@@ -28,9 +28,13 @@ function resolveImage(notePath, src) {
   return parts.join('/')
 }
 
+// GitHub's version of a note; '' for one created on this device
+const fetchOriginal = sha => sha === null ? Promise.resolve('') : getBlob(sha)
+
 export default function Editor({ path, entry, files, edited, onEdit, onClose, onHome }) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [mode, setMode] = useState('preview')
   const [images, setImages] = useState({}) // repo path -> data URL, or null if unavailable
   const textareaRef = useRef()
@@ -71,7 +75,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
     if (entry.sha === shaRef.current) return
     shaRef.current = entry.sha
     const hasEdit = edited !== undefined
-    getBlob(entry.sha).then(original => {
+    fetchOriginal(entry.sha).then(original => {
       originalRef.current = original
       if (!hasEdit && pendingRef.current === null) setContent(original)
     }).catch(() => {})
@@ -86,11 +90,12 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
   async function load() {
     setLoading(true)
     try {
-      const original = await getBlob(entry.sha)
+      const original = await fetchOriginal(entry.sha)
       originalRef.current = original
       setContent(edited ?? original)
     } catch {
-      setContent(edited ?? '')
+      // Without GitHub's version edits can't be tracked, so don't allow any
+      setLoadError(true)
     }
     setLoading(false)
   }
@@ -124,7 +129,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
     let cancelled = false
     Promise.all(missing.map(async p => {
       const mime = MIME[p.split('.').pop().toLowerCase()]
-      if (!files[p] || !mime) return [p, null]
+      if (!files[p]?.sha || !mime) return [p, null]
       try { return [p, `data:${mime};base64,${await getBlobBase64(files[p].sha)}`] } catch { return [p, null] }
     })).then(entries => {
       if (!cancelled) setImages(prev => ({ ...prev, ...Object.fromEntries(entries) }))
@@ -132,13 +137,19 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
     return () => { cancelled = true }
   }, [imagePaths])
 
-  if (loading) {
+  if (loading || loadError) {
     return (
       <div className="flex flex-col flex-1 min-h-0">
         <Header title={fileName} onHome={onHome} onBack={onClose} />
-        <div className="flex justify-center py-12">
-          <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm text-center py-12 px-6">
+            Couldn't open this note. It isn't saved on this device yet — connect to the internet and pull to refresh.
+          </p>
+        )}
       </div>
     )
   }
@@ -167,7 +178,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
       {mode === 'edit' ? (
         <textarea
           ref={textareaRef}
-          className="flex-1 w-full px-5 py-4 bg-background text-foreground resize-none outline-none font-mono text-[15px] leading-relaxed"
+          className="flex-1 w-full px-5 py-4 bg-background text-foreground resize-none outline-none font-mono text-base leading-relaxed"
           style={{ WebkitOverflowScrolling: 'touch' }}
           value={content}
           onChange={e => handleChange(e.target.value)}
@@ -179,7 +190,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
         <div
           className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
           style={{ WebkitOverflowScrolling: 'touch' }}
-          dangerouslySetInnerHTML={{ __html: preview || '<p class="empty-preview">Nothing to preview yet.</p>' }}
+          dangerouslySetInnerHTML={{ __html: preview || '<p class="text-muted-foreground italic">Nothing to preview yet.</p>' }}
         />
       )}
     </div>

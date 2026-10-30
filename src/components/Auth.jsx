@@ -15,7 +15,7 @@ export default function Auth({ onAuth }) {
     try {
       await onAuth(token.trim())
     } catch {
-      setError('Token invalid or missing repo access. Needs "repo" scope.')
+      setError('Token invalid, or GitHub can\'t be reached.')
       setLoading(false)
     }
   }
@@ -31,7 +31,7 @@ export default function Auth({ onAuth }) {
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-2.5">
           <Input
             type="password"
-            placeholder="ghp_xxxxxxxxxxxx"
+            placeholder="github_pat_xxxxxxxxxxxx"
             value={token}
             onChange={e => setToken(e.target.value)}
             autoComplete="off"
@@ -46,13 +46,16 @@ export default function Auth({ onAuth }) {
           </Button>
         </form>
         <a
-          href="https://github.com/settings/tokens/new?scopes=repo&description=Folio"
+          href="https://github.com/settings/personal-access-tokens/new"
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary text-sm hover:opacity-80 transition-opacity"
         >
           Create a token on GitHub ↗
         </a>
+        <p className="text-xs text-muted-foreground text-center">
+          Use a fine-grained token limited to your notes repo, with Contents: Read and write.
+        </p>
       </div>
     </div>
   )

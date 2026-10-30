@@ -31,11 +31,16 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 | `bg-destructive` | Errors / danger (`#e05252`) |
 | `--radius` | `0.75rem` base radius |
 
-Legacy variables `--bg`, `--bg2`, `--safe-top`, `--safe-bottom` etc. remain in `src/index.css` for the hand-rolled components in `src/App.css` — migrate them to Tailwind as components are rebuilt.
+`--safe-top` / `--safe-bottom` hold the iOS safe-area insets. `src/App.css` only styles the generated markdown preview HTML, using the tokens above.
 
 ## Architecture
 
-- `src/lib/github.js` — all GitHub API calls. `init(token)` sets up Octokit; `setRepo(owner, repo)` sets target repo.
-- `src/lib/storage.js` — localStorage wrapper for token + repo.
+- `src/lib/github.js` — all GitHub API calls. `init(token)` sets up Octokit; `setRepo(owner, repo)` sets target repo. Blob reads go through the offline cache.
+- `src/lib/changes.js` — pure model of local changes (edits, renames, deletes, new files) layered over the remote tree. Covered by `changes.test.js` (`npm test`).
+- `src/lib/cache.js` — IndexedDB copies of the last tree and of blobs (by sha) for offline use.
+- `src/lib/storage.js` — localStorage/sessionStorage: token, repo, cached user, theme, local changes, open folder/note.
+- `src/hooks/` — `useAuth` (token/user/repo), `useRepo` (remote tree, local changes, sync), `useTheme`. `App.jsx` is layout and UI actions.
+- Prompts use `BottomSheet` (shadcn Sheet). Pull-to-refresh wraps every screen (`PullToRefresh`).
+- Offline: a service worker (vite-plugin-pwa) caches the app; all notes are prefetched to IndexedDB. Every change is local until Sync, which makes one commit.
 - App flow: **Auth → RepoSetup → FileBrowser / Editor**
 - Token and repo are always user-supplied at runtime. Nothing is hardcoded.
