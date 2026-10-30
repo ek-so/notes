@@ -1,15 +1,15 @@
 {
-  "name": "Brain Notes",
-  "short_name": "Brain",
-  "description": "Edit your brain repo on the go",
-  "start_url": "/brain/",
+  "name": "Folio",
+  "short_name": "Folio",
+  "description": "Read and edit your notes from any GitHub repo",
+  "start_url": "/folio/",
   "display": "standalone",
   "background_color": "#0f0f0f",
   "theme_color": "#0f0f0f",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/brain/icon.svg",
+      "src": "/folio/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }

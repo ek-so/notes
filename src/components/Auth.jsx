@@ -21,8 +21,8 @@ export default function Auth({ onAuth }) {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <div className="auth-icon">🧠</div>
-        <h1>Brain</h1>
+        <div className="auth-icon">📄</div>
+        <h1>Folio</h1>
         <p>Paste a GitHub token to access your notes.</p>
         <form onSubmit={handleSubmit}>
           <input
