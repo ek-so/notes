@@ -47,7 +47,7 @@ export default function RenameModal({ item, onRename, onClose }) {
             <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim()} className="flex-1">Rename</Button>
+            <Button type="submit" disabled={!name.trim()} className="flex-1">Save</Button>
           </div>
         </form>
       </div>
