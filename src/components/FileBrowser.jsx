@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
-import { List, Plus, FileText, Folder, PencilSimple, Trash, ArrowLeft, DotsThree } from '@phosphor-icons/react'
+import { Plus, FileText, Folder, PencilSimple, Trash, DotsThree } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
+import Header from './Header.jsx'
 import RenameModal from './RenameModal.jsx'
 import DeleteModal from './DeleteModal.jsx'
 import { cn } from '@/lib/utils.js'
@@ -80,18 +81,12 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         className={cn('relative flex flex-col flex-1 min-h-0 bg-background', !pull && 'transition-transform')}
         style={{ transform: offset ? `translateY(${offset}px)` : undefined }}
       >
-      <div
-        className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <div className="flex items-center gap-1 min-w-0">
-          {path ? (
-            <Button variant="ghost" size="icon" onClick={goBack} aria-label="Back" className="shrink-0"><ArrowLeft className="size-5" /></Button>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={onMenu} aria-label="Menu" className="shrink-0">
-              <List className="size-5" />
-            </Button>
-          )}
-          <span className="text-xl font-bold truncate">{currentFolder}</span>
-        </div>
+      <Header
+        title={currentFolder}
+        onMenu={onMenu}
+        onHome={() => onNavigate('')}
+        onBack={path ? goBack : undefined}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" aria-label="New" className="shrink-0">
@@ -103,7 +98,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
             <DropdownMenuItem onSelect={() => onNewFile(path, 'folder')}><Folder /> New folder</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </Header>
 
       {loading && (
         <div className="flex justify-center py-12">

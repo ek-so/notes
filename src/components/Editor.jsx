@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getBlob } from '../lib/github.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { Button } from './ui/button.jsx'
-import { House, ArrowLeft } from '@phosphor-icons/react'
+import Header from './Header.jsx'
 import { cn } from '@/lib/utils.js'
 
 marked.setOptions({ breaks: true, gfm: true })
@@ -64,10 +63,7 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
   if (loading) {
     return (
       <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="shrink-0"><ArrowLeft className="size-5" /></Button>
-          <span className="text-base font-semibold text-muted-foreground">Loading…</span>
-        </div>
+        <Header title={fileName} onHome={onHome} onBack={onClose} />
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
         </div>
@@ -77,16 +73,7 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
 
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 'var(--safe-top)' }}>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
-        <Button variant="ghost" size="icon" onClick={onHome} aria-label="Home" className="shrink-0">
-          <House className="size-5" />
-        </Button>
-        <div className="h-5 w-px bg-border shrink-0" />
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back" className="shrink-0"><ArrowLeft className="size-5" /></Button>
-        <span className="flex-1 text-base font-semibold truncate min-w-0">
-          {fileName}
-          {changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
-        </span>
+      <Header title={fileName} changed={changed} onHome={onHome} onBack={onClose}>
         <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
           <button
             className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors',
@@ -99,7 +86,7 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
             onClick={() => setMode('preview')}
           >Preview</button>
         </div>
-      </div>
+      </Header>
 
       {mode === 'edit' ? (
         <textarea
