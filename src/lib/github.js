@@ -72,12 +72,12 @@ export async function commitTree(remote, entries, message) {
   await octokit.rest.git.updateRef({ owner, repo, ref: `heads/${remote.branch}`, sha: commit.sha })
 }
 
-export async function createFile(path, content) {
+export async function createFile(path, content, message) {
   const encoded = btoa(unescape(encodeURIComponent(content)))
   const name = path.split('/').pop()
   await octokit.rest.repos.createOrUpdateFileContents({
     owner, repo, path,
-    message: `Create ${name}`,
+    message: message || `Create ${name}`,
     content: encoded,
   })
 }

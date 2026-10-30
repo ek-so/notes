@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
-import { Menu, Plus } from 'lucide-react'
+import { Menu, Plus, FileText, Folder } from 'lucide-react'
 import { Button } from './ui/button.jsx'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
 import ItemActionsModal from './ItemActionsModal.jsx'
 import { cn } from '@/lib/utils.js'
 
@@ -69,9 +70,17 @@ export default function FileBrowser({ listDir, loading, error, onSelect, current
           )}
           <span className="text-xl font-bold truncate">{currentFolder}</span>
         </div>
-        <Button size="icon" onClick={() => onNewFile(path)} aria-label="New note" className="shrink-0">
-          <Plus className="size-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" aria-label="New" className="shrink-0">
+              <Plus className="size-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => onNewFile(path, 'note')}><FileText /> New note</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onNewFile(path, 'folder')}><Folder /> New folder</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {loading && (

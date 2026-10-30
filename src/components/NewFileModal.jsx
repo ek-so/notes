@@ -3,7 +3,8 @@ import { createFile } from '../lib/github.js'
 import { Button } from './ui/button.jsx'
 import { Input } from './ui/input.jsx'
 
-export default function NewFileModal({ folder, onCreated, onClose }) {
+export default function NewFileModal({ folder, kind, onCreated, onClose }) {
+  const isFolder = kind === 'folder'
   const [name, setName] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
@@ -18,11 +19,16 @@ export default function NewFileModal({ folder, onCreated, onClose }) {
     setCreating(true)
     setError('')
     try {
-      const filePath = folder ? `${folder}/${trimmed}.md` : `${trimmed}.md`
-      await createFile(filePath, `# ${trimmed}\n\n`)
-      onCreated(filePath)
+      const base = folder ? `${folder}/${trimmed}` : trimmed
+      if (isFolder) {
+        await createFile(`${base}/.gitkeep`, '', `Create folder ${trimmed}`)
+        onCreated(base)
+      } else {
+        await createFile(`${base}.md`, `# ${trimmed}\n\n`)
+        onCreated(`${base}.md`)
+      }
     } catch {
-      setError('Could not create file. Try again.')
+      setError(isFolder ? 'Could not create folder. Try again.' : 'Could not create file. Try again.')
       setCreating(false)
     }
   }
@@ -38,14 +44,14 @@ export default function NewFileModal({ folder, onCreated, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         <div>
-          <h2 className="text-lg font-bold">New note</h2>
+          <h2 className="text-lg font-bold">{isFolder ? 'New folder' : 'New note'}</h2>
           {folder && <p className="text-xs text-muted-foreground mt-0.5">in {folder}</p>}
         </div>
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Note name"
+            placeholder={isFolder ? 'Folder name' : 'Note name'}
             value={name}
             onChange={e => setName(e.target.value)}
             autoCorrect="off"

@@ -32,6 +32,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const [newFileFolder, setNewFileFolder] = useState(null)
+  const [newFileKind, setNewFileKind] = useState('note')
   const [showNewFile, setShowNewFile] = useState(false)
   const [remote, setRemote] = useState(null)
   const [remoteError, setRemoteError] = useState('')
@@ -195,7 +196,7 @@ export default function App() {
   async function handleCreated(path) {
     setShowNewFile(false)
     try { await pull() } catch {}
-    setSelectedFile(path)
+    if (newFileKind === 'note') setSelectedFile(path)
   }
 
   async function authenticate(token) {
@@ -254,7 +255,7 @@ export default function App() {
             onMenu={() => setMenuOpen(true)}
             onSelect={setSelectedFile}
             currentPath={selectedFile}
-            onNewFile={f => { setNewFileFolder(f || ''); setShowNewFile(true) }}
+            onNewFile={(f, kind) => { setNewFileFolder(f || ''); setNewFileKind(kind); setShowNewFile(true) }}
             repo={repo}
           />
           <div
@@ -301,6 +302,7 @@ export default function App() {
       {showNewFile && (
         <NewFileModal
           folder={newFileFolder}
+          kind={newFileKind}
           onCreated={handleCreated}
           onClose={() => setShowNewFile(false)}
         />
