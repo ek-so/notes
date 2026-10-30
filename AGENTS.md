@@ -27,7 +27,7 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 | `border-border` | Dividers, input borders |
 | `text-foreground` | Primary text |
 | `text-muted-foreground` | Secondary / muted text |
-| `bg-primary` / `text-primary` | Accent teal |
+| `bg-primary` / `text-primary` | Accent blue |
 | `bg-destructive` | Errors / danger (`#e05252`) |
 | `--radius` | `0.75rem` base radius |
 
