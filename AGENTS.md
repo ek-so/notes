@@ -1,5 +1,9 @@
 # Folio — Agent Instructions
 
+## How to work with me
+- **Ask before building.** Clarify scope before writing code. You may suggest, but never implement more than what was explicitly confirmed.
+- **Be concise.** Short sentences. No filler. No summaries of what you just did.
+
 React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHub REST API.
 
 ## Design system — shadcn/ui + Tailwind v4

@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
 @layer base {
+  html, body, #root {
+    height: 100%;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
   :root {
     --background: oklch(0.07 0 0);
     --foreground: oklch(0.93 0 0);

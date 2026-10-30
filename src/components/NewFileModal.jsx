@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createFile } from '../lib/github.js'
+import { Button } from './ui/button.jsx'
+import { Input } from './ui/input.jsx'
 
 export default function NewFileModal({ folder, onCreated, onClose }) {
   const [name, setName] = useState('')
@@ -26,12 +28,21 @@ export default function NewFileModal({ folder, onCreated, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>New note</h2>
-        {folder && <p className="modal-folder">in {folder}</p>}
-        <form onSubmit={handleCreate}>
-          <input
+    <div
+      className="fixed inset-0 bg-black/60 flex items-end justify-center z-50"
+      style={{ paddingBottom: 'var(--safe-bottom)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[680px] bg-card rounded-t-2xl p-6 flex flex-col gap-4"
+        onClick={e => e.stopPropagation()}
+      >
+        <div>
+          <h2 className="text-lg font-bold">New note</h2>
+          {folder && <p className="text-xs text-muted-foreground mt-0.5">in {folder}</p>}
+        </div>
+        <form onSubmit={handleCreate} className="flex flex-col gap-3">
+          <Input
             ref={inputRef}
             type="text"
             placeholder="Note name"
@@ -39,13 +50,16 @@ export default function NewFileModal({ folder, onCreated, onClose }) {
             onChange={e => setName(e.target.value)}
             autoCorrect="off"
             autoCapitalize="words"
+            className="h-11 bg-background border-border"
           />
-          {error && <p className="error">{error}</p>}
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" disabled={creating || !name.trim()}>
+          {error && <p className="text-destructive text-xs">{error}</p>}
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={creating || !name.trim()} className="flex-1">
               {creating ? 'Creating…' : 'Create'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
