@@ -61,6 +61,11 @@ export async function getBlob(sha) {
   return decode(data.content)
 }
 
+export async function getBlobBase64(sha) {
+  const { data } = await octokit.rest.git.getBlob({ owner, repo, file_sha: sha })
+  return data.content.replace(/\n/g, '')
+}
+
 // Creates one commit on top of `remote` with the given tree entries.
 export async function commitTree(remote, entries, message) {
   const { data: tree } = await octokit.rest.git.createTree({

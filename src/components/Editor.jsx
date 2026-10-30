@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { getBlob } from '../lib/github.js'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { getBlob, getBlobBase64 } from '../lib/github.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import Header from './Header.jsx'
@@ -7,10 +7,31 @@ import { cn } from '@/lib/utils.js'
 
 marked.setOptions({ breaks: true, gfm: true })
 
-export default function Editor({ path, entry, edited, onEdit, onClose, onHome }) {
+const MIME = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+  webp: 'image/webp', svg: 'image/svg+xml', avif: 'image/avif', bmp: 'image/bmp',
+}
+
+// Repo path for a relative image src in the note at `notePath`, or null for
+// external URLs.
+function resolveImage(notePath, src) {
+  if (!src || /^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(src)) return null
+  let rel
+  try { rel = decodeURI(src.split(/[?#]/)[0]) } catch { return null }
+  const parts = rel.startsWith('/') ? [] : notePath.split('/').slice(0, -1)
+  for (const seg of rel.split('/')) {
+    if (!seg || seg === '.') continue
+    if (seg === '..') parts.pop()
+    else parts.push(seg)
+  }
+  return parts.join('/')
+}
+
+export default function Editor({ path, entry, files, edited, onEdit, onClose, onHome }) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('edit')
+  const [images, setImages] = useState({}) // repo path -> data URL, or null if unavailable
   const textareaRef = useRef()
   const originalRef = useRef(null)
   const pendingRef = useRef(null)
@@ -58,7 +79,35 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
 
   const changed = edited !== undefined
   const fileName = path.split('/').pop().replace(/\.md$/, '')
-  const preview = DOMPurify.sanitize(marked.parse(content))
+  // Preview HTML with repo images swapped for loaded data URLs
+  const [preview, imagePaths] = useMemo(() => {
+    if (mode !== 'preview') return ['', []]
+    const tpl = document.createElement('template')
+    tpl.innerHTML = DOMPurify.sanitize(marked.parse(content))
+    const paths = []
+    for (const img of tpl.content.querySelectorAll('img')) {
+      const repoPath = resolveImage(path, img.getAttribute('src'))
+      if (repoPath === null) continue
+      paths.push(repoPath)
+      if (images[repoPath]) img.setAttribute('src', images[repoPath])
+      else img.removeAttribute('src')
+    }
+    return [tpl.innerHTML, paths]
+  }, [mode, content, images, path])
+
+  useEffect(() => {
+    const missing = [...new Set(imagePaths)].filter(p => !(p in images))
+    if (!missing.length) return
+    let cancelled = false
+    Promise.all(missing.map(async p => {
+      const mime = MIME[p.split('.').pop().toLowerCase()]
+      if (!files[p] || !mime) return [p, null]
+      try { return [p, `data:${mime};base64,${await getBlobBase64(files[p].sha)}`] } catch { return [p, null] }
+    })).then(entries => {
+      if (!cancelled) setImages(prev => ({ ...prev, ...Object.fromEntries(entries) }))
+    })
+    return () => { cancelled = true }
+  }, [imagePaths])
 
   if (loading) {
     return (
@@ -101,7 +150,7 @@ export default function Editor({ path, entry, edited, onEdit, onClose, onHome })
         />
       ) : (
         <div
-          className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed"
+          className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
           style={{ WebkitOverflowScrolling: 'touch' }}
           dangerouslySetInnerHTML={{ __html: preview || '<p class="empty-preview">Nothing to preview yet.</p>' }}
         />

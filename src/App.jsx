@@ -243,6 +243,7 @@ export default function App() {
           key={selectedFile}
           path={selectedFile}
           entry={virtual[selectedFile]}
+          files={virtual}
           edited={changes.edits[virtual[selectedFile].orig]}
           onEdit={(content, original) =>
             updateChanges(ch => setEdit(ch, virtual[selectedFile], content, original))}
