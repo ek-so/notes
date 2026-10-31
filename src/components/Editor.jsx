@@ -45,6 +45,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
   const highlightRef = useRef()
   const editedAtRef = useRef(null) // source offset to bring into view back in preview
   const dragRef = useRef(null)
+  const keepEditingRef = useRef(false) // blur from scrolling: hide keyboard, stay in markdown
 
   useEffect(() => { onEditRef.current = onEdit }, [onEdit])
 
@@ -137,8 +138,8 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
     textarea.focus()
   }
 
-  // Dragging the text while typing hides the keyboard, like iOS Notes, which
-  // returns to preview. A long press (text selection) doesn't count.
+  // Dragging the text while typing hides the keyboard, like iOS Notes, but
+  // stays in markdown. A long press (text selection) doesn't count.
   function handleTextTouchStart(e) {
     const focused = document.activeElement === e.currentTarget
     dragRef.current = focused ? { y: e.touches[0].clientY, time: e.timeStamp } : null
@@ -151,12 +152,17 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
       dragRef.current = null
     } else if (Math.abs(e.touches[0].clientY - drag.y) > DRAG_PX) {
       dragRef.current = null
+      keepEditingRef.current = true
       e.currentTarget.blur()
     }
   }
 
-  // Keyboard closed (scroll, Done, tapping elsewhere): back to preview
+  // Keyboard closed with Done (or by tapping elsewhere): back to preview
   function handleTextBlur(e) {
+    if (keepEditingRef.current) {
+      keepEditingRef.current = false
+      return
+    }
     editedAtRef.current = e.currentTarget.selectionStart
     setMode('preview')
   }
