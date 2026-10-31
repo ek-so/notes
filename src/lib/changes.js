@@ -110,6 +110,46 @@ export function nameError(name) {
   return null
 }
 
+const TAKEN = 'That name is already taken.'
+const FREED = 'Sync first: a renamed or deleted item just used this name.'
+
+// Why a file can't be placed at `path`, or null. `orig` is the file's
+// original path when moving an existing file (undefined for a new one).
+// A path that an unsynced rename/delete moved away from can't be reused yet:
+// one commit can't both remove and add it. The exception is creating a new
+// file where a deleted one was — add() turns that into an edit.
+function placeError(ch, virtual, path, orig) {
+  if (exists(virtual, path)) return TAKEN
+  const freed = path in ch.moves && path !== orig
+  if (freed && !(orig === undefined && ch.moves[path] === null)) return FREED
+  return null
+}
+
+// Path an item gets when renamed to `name` (files keep their extension).
+export function renameTarget(item, name) {
+  const parent = item.path.slice(0, item.path.lastIndexOf('/') + 1)
+  return parent + name + (item.type === 'dir' ? '' : splitName(item.name)[1])
+}
+
+// Why `item` can't be renamed to `to`, or null.
+export function renameError(ch, virtual, item, to) {
+  if (exists(virtual, to)) return TAKEN
+  for (const [path, entry] of affected(virtual, item.path, item.type === 'dir')) {
+    const error = placeError(ch, virtual, to + path.slice(item.path.length), entry.orig)
+    if (error) return error
+  }
+  return null
+}
+
+// Why new files can't be created at `paths`, or null.
+export function createError(ch, virtual, paths) {
+  for (const path of paths) {
+    const error = placeError(ch, virtual, path)
+    if (error) return error
+  }
+  return null
+}
+
 // Adds a file created on this device. Recreating a path that exists on
 // GitHub (deleted locally) turns into an edit of that file.
 export function add(ch, files, path, content) {

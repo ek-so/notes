@@ -35,18 +35,18 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 - **Every screen uses `Header`.** Inner screens (folders, notes) show `← title`, with `PathBreadcrumbs` at the top of the scrolling content (not fixed); no separate home button.
 - Never hardcode colors — use Tailwind semantic tokens (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary`, etc.).
 
-### CSS variables (defined in `src/index.css`)
+### CSS variables (defined in `src/index.css`, with light and dark values)
 
 | Tailwind token | Role |
 |---|---|
-| `bg-background` | Page background (`#0f0f0f`) |
-| `bg-card` | Cards, modals (`#1a1a1a`) |
-| `bg-secondary` | Hover, subtle fills (`#252525`) |
+| `bg-background` | Page background |
+| `bg-card` / `bg-popover` | Sheets, popovers |
+| `bg-secondary` | Hover, subtle fills |
 | `border-border` | Dividers, input borders |
 | `text-foreground` | Primary text |
 | `text-muted-foreground` | Secondary / muted text |
 | `bg-primary` / `text-primary` | Accent blue |
-| `bg-destructive` | Errors / danger (`#e05252`) |
+| `bg-destructive` | Errors / danger |
 | `bg-success` / `text-success-foreground` | Success feedback, e.g. "Synced" (light green) |
 | `bg-segment` / `bg-segment-active` | Segmented toggle track / selected segment (lighter in both themes) |
 | `--radius` | `0.75rem` base radius |

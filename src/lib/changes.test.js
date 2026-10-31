@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   empty, count, virtualFiles, add, setEdit, rename, remove, conflicts, settle, treeEntries,
+  renameTarget, renameError, createError,
 } from './changes.js'
 
 const files = {
@@ -70,5 +71,25 @@ describe('changes', () => {
     const after = { 'b.md': { sha: 'b1' }, 'dir/x.md': files['dir/x.md'] }
     const next = settle(current, committed, after)
     expect(next).toEqual({ edits: { 'b.md': 'edited' }, moves: {}, base: { 'b.md': 'b1' } })
+  })
+})
+
+describe('name checks', () => {
+  const item = (path, type = 'file') => ({ name: path.split('/').pop(), path, type })
+
+  it('keeps the extension and refuses taken names', () => {
+    expect(renameTarget(item('dir/x.md'), 'y')).toBe('dir/y.md')
+    expect(renameError(empty(), view(empty()), item('a.md'), 'dir')).toMatch(/taken/)
+  })
+
+  it('refuses a path freed by an unsynced rename, except a new file where one was deleted', () => {
+    let ch = rename(empty(), view(empty()), 'a.md', 'b.md', false)
+    expect(createError(ch, view(ch), ['a.md'])).toMatch(/Sync first/)
+    expect(renameError(ch, view(ch), item('dir/x.md'), 'a.md')).toMatch(/Sync first/)
+    // renaming b.md back to its own original name is fine
+    expect(renameError(ch, view(ch), item('b.md'), 'a.md')).toBeNull()
+    ch = remove(empty(), view(empty()), 'a.md', false)
+    expect(createError(ch, view(ch), ['a.md'])).toBeNull()
+    expect(renameError(ch, view(ch), item('dir/x.md'), 'a.md')).toMatch(/Sync first/)
   })
 })

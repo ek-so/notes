@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { renderBlocks, tapOffset } from './markdown.js'
+import { renderBlocks, tapOffset, highlightMarkdown } from './markdown.js'
 
 describe('markdown', () => {
   it('tags each block with its source range', () => {
@@ -19,8 +19,7 @@ describe('markdown', () => {
 })
 
 describe('highlightMarkdown', () => {
-  it('styles markdown without changing the text', async () => {
-    const { highlightMarkdown } = await import('./markdown.js')
+  it('styles markdown without changing the text', () => {
     const md = '# Title\nSee [docs](a.md), **bold** and *it* <u>u</u> snake_case_name'
     const html = highlightMarkdown(md)
     const text = html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')

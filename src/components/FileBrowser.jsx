@@ -8,7 +8,7 @@ import { splitName } from '../lib/changes.js'
 import { isImage } from '../lib/files.js'
 import Spinner from './Spinner.jsx'
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repo, onRename, onDelete, menu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, menu }) {
   const items = loading ? [] : listDir(path)
 
   function navigate(item) {
@@ -20,7 +20,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
     onNavigate(path.slice(0, Math.max(path.lastIndexOf('/'), 0)))
   }
 
-  const repoName = repo ? repo.split('/')[1] : 'Notes'
   const currentFolder = path ? path.split('/').pop() : repoName
 
   return (

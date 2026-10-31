@@ -13,7 +13,7 @@ function caretAt(x, y) {
   return p && { node: p.offsetNode, offset: p.offset }
 }
 
-const LONG_WORD = /\S{16,}/g
+const LONG_WORD = /(\S{16,})/
 const BREAK_EVERY = 8
 
 // Long unbroken words (tokens, URLs) in table cells get <wbr> break points,
@@ -23,23 +23,17 @@ function breakLongWords(root) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   const nodes = []
   while (walker.nextNode()) {
-    if (walker.currentNode.parentElement.closest('td, th') && LONG_WORD.test(walker.currentNode.data)) nodes.push(walker.currentNode)
-    LONG_WORD.lastIndex = 0
+    const node = walker.currentNode
+    if (node.parentElement.closest('td, th') && LONG_WORD.test(node.data)) nodes.push(node)
   }
   for (const node of nodes) {
-    const parts = node.data.split(/(\S{16,})/)
-    const frag = document.createDocumentFragment()
-    for (const part of parts) {
-      if (!/^\S{16,}$/.test(part)) {
-        if (part) frag.append(part)
-        continue
-      }
-      for (let i = 0; i < part.length; i += BREAK_EVERY) {
-        if (i) frag.append(document.createElement('wbr'))
-        frag.append(part.slice(i, i + BREAK_EVERY))
-      }
-    }
-    node.replaceWith(frag)
+    // split() with a capture group puts the long words at odd indexes
+    const parts = node.data.split(LONG_WORD).flatMap((part, i) => {
+      if (i % 2 === 0) return part ? [part] : []
+      const chunks = part.match(new RegExp(`.{1,${BREAK_EVERY}}`, 'g'))
+      return chunks.flatMap((chunk, j) => j ? [document.createElement('wbr'), chunk] : [chunk])
+    })
+    node.replaceWith(...parts)
   }
 }
 

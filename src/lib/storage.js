@@ -4,6 +4,7 @@ const USER_KEY = 'folio_user'
 const THEME_KEY = 'folio_theme'
 const FOLDER_KEY = 'folio_folder'
 const FILE_KEY = 'folio_file'
+const SETTINGS_KEY = 'folio_settings'
 const CHANGES_KEY = 'folio_changes_'
 
 function read(store, key) {
@@ -29,15 +30,17 @@ export const storage = {
   setUser: (user) => write(localStorage, USER_KEY, user && JSON.stringify({ login: user.login })),
   getTheme: () => read(localStorage, THEME_KEY),
   setTheme: (theme) => write(localStorage, THEME_KEY, theme),
-  // Session-only, so a reload keeps the current folder and open note
+  // Session-only, so a reload keeps the current folder, open note and Settings
   getFolder: () => read(sessionStorage, FOLDER_KEY) || '',
   setFolder: (folder) => write(sessionStorage, FOLDER_KEY, folder),
   getFile: () => read(sessionStorage, FILE_KEY),
   setFile: (path) => write(sessionStorage, FILE_KEY, path),
+  getSettingsOpen: () => read(sessionStorage, SETTINGS_KEY) === '1',
+  setSettingsOpen: (open) => write(sessionStorage, SETTINGS_KEY, open ? '1' : null),
   // Everything tied to the signed-in account; theme stays
   clearSession: () => {
     for (const key of [TOKEN_KEY, REPO_KEY, USER_KEY]) write(localStorage, key, null)
-    for (const key of [FOLDER_KEY, FILE_KEY]) write(sessionStorage, key, null)
+    for (const key of [FOLDER_KEY, FILE_KEY, SETTINGS_KEY]) write(sessionStorage, key, null)
   },
 }
 

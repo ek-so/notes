@@ -1,7 +1,7 @@
 import { List, Sun, Moon, Monitor, Gear, SignOut } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem,
 } from './ui/dropdown-menu.jsx'
 import { cn } from '@/lib/utils.js'
 
@@ -23,20 +23,27 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64" onCloseAutoFocus={e => e.preventDefault()}>
-        <div className="flex h-11 gap-1 rounded-lg bg-segment p-1 mx-1 my-1" role="radiogroup" aria-label="Theme">
+        {/* Radio items: arrow keys reach them; selecting keeps the menu open */}
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={onTheme}
+          aria-label="Theme"
+          className="flex h-11 gap-1 rounded-lg bg-segment p-1 mx-1 my-1"
+        >
           {THEMES.map(([value, label, Icon]) => (
-            <Button
+            <DropdownMenuRadioItem
               key={value}
-              variant="ghost"
-              size="icon"
-              role="radio"
-              aria-checked={theme === value}
+              value={value}
               aria-label={label}
-              onClick={() => onTheme(value)}
-              className={cn('h-9 flex-1 rounded-sm', theme === value ? 'bg-segment-active text-foreground shadow-sm hover:bg-segment-active' : 'text-muted-foreground')}
-            ><Icon /></Button>
+              onSelect={e => e.preventDefault()}
+              className={cn(
+                'flex h-9 flex-1 items-center justify-center rounded-sm transition-colors [&_svg]:size-4',
+                'data-[highlighted]:ring-1 data-[highlighted]:ring-ring',
+                theme === value ? 'bg-segment-active text-foreground shadow-sm' : 'text-muted-foreground'
+              )}
+            ><Icon /></DropdownMenuRadioItem>
           ))}
-        </div>
+        </DropdownMenuRadioGroup>
         <DropdownMenuItem onSelect={onSettings}><Gear /> Settings</DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onSelect={onSignOut}><SignOut /> Sign out</DropdownMenuItem>
       </DropdownMenuContent>
