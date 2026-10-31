@@ -74,7 +74,9 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                       onClick={() => navigate(item)}
                       disabled={!openable}
                     >
-                      <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : isImage(item.name) ? '🖼️' : '📄'}</span>
+                      {item.type === 'dir'
+                        ? <img src={`${import.meta.env.BASE_URL}folio-logo.png`} alt="" className="size-6 shrink-0 object-contain" />
+                        : <span className="text-lg shrink-0">{isImage(item.name) ? '🖼️' : '📄'}</span>}
                       <span className="flex-1 text-base truncate">
                         {base}
                         {ext && <span className="text-muted-foreground">{ext}</span>}
