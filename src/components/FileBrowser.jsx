@@ -47,6 +47,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
 
       {/* Breadcrumbs scroll away with the list */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="max-w-[680px] mx-auto">
         {path && <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} />}
 
         {loading && (
@@ -87,6 +88,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
             })}
           </ul>
         )}
+        </div>
       </div>
     </div>
   )

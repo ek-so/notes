@@ -48,25 +48,27 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
           </Button>
         )}
       </Header>
-      {loading || loadError ? (
-        <>
-          {breadcrumbs}
-          {loading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
-          ) : (
-            <p className="text-muted-foreground text-sm text-center py-12 px-6">
-              Couldn't open this note. It isn't saved on this device yet — connect to the internet and pull to refresh.
-            </p>
-          )}
-        </>
-      ) : mode === 'edit' ? (
-        // The textarea scrolls on its own, so breadcrumbs can't scroll with it
-        <MarkdownEditor ref={textareaRef} content={content} onChange={change} onDone={finishEditing} />
-      ) : (
-        <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing}>
-          {breadcrumbs}
-        </MarkdownPreview>
-      )}
+      <div className="flex flex-col flex-1 min-h-0 max-w-[680px] mx-auto w-full">
+        {loading || loadError ? (
+          <>
+            {breadcrumbs}
+            {loading ? (
+              <div className="flex justify-center py-12"><Spinner /></div>
+            ) : (
+              <p className="text-muted-foreground text-sm text-center py-12 px-6">
+                Couldn't open this note. It isn't saved on this device yet — connect to the internet and pull to refresh.
+              </p>
+            )}
+          </>
+        ) : mode === 'edit' ? (
+          // The textarea scrolls on its own, so breadcrumbs can't scroll with it
+          <MarkdownEditor ref={textareaRef} content={content} onChange={change} onDone={finishEditing} />
+        ) : (
+          <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing}>
+            {breadcrumbs}
+          </MarkdownPreview>
+        )}
+      </div>
     </div>
   )
 }

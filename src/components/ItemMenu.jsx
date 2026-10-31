@@ -17,7 +17,7 @@ export default function ItemMenu({ item, onRename, onDelete }) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label="More actions" className="shrink-0 text-muted-foreground">
-            <DotsThree weight="bold" />
+            <DotsThree weight="fill" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>

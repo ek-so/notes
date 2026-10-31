@@ -13,15 +13,17 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
   const [owner, name] = repo.split('/')
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex-1 min-w-0 justify-start gap-3 -ml-2 px-2 font-normal" aria-label="Account and settings">
-          <List />
-          <span className="truncate text-xl">
-            <span className="text-muted-foreground">{owner} / </span>
-            <span className="font-bold">{name}</span>
-          </span>
-        </Button>
-      </DropdownMenuTrigger>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Account and settings" className="shrink-0 -ml-2">
+            <List />
+          </Button>
+        </DropdownMenuTrigger>
+        <span className="truncate text-xl select-none">
+          <span className="text-muted-foreground">{owner} / </span>
+          <span className="font-bold">{name}</span>
+        </span>
+      </div>
       <DropdownMenuContent align="start" className="w-64" onCloseAutoFocus={e => e.preventDefault()}>
         {/* Radio items: arrow keys reach them; selecting keeps the menu open */}
         <DropdownMenuRadioGroup

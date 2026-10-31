@@ -103,7 +103,7 @@ export default function App() {
   const repoName = auth.repo.split('/')[1]
 
   return (
-    <div className="flex flex-col h-full max-w-[680px] mx-auto bg-background">
+    <div className="flex flex-col h-full bg-background">
       <PullToRefresh onRefresh={() => window.location.reload()}>
         {showSettings ? (
           <Settings login={auth.user.login} repo={auth.repo} onBack={() => setShowSettings(false)} />
