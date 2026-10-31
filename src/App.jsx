@@ -166,7 +166,7 @@ export default function App() {
 
       <div
         className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border bg-background shrink-0"
-        style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
+        style={{ paddingBottom: 'calc(1rem + var(--safe-bottom))' }}
       >
         <span className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', repo.online && 'invisible')}>
           <CloudSlash className="size-4" /> Offline

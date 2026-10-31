@@ -6,7 +6,7 @@ import { Button } from './ui/button.jsx'
 // Without it, the home screen: `start` (the account menu) fills the left.
 export default function Header({ title, changed, onBack, start, children }) {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 border-b border-border shrink-0">
+    <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
       {onBack ? (
         <>
           <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" className="shrink-0">
