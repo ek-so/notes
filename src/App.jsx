@@ -165,7 +165,7 @@ export default function App() {
         <Button
           onClick={repo.sync}
           disabled={syncing}
-          variant={syncState === 'error' ? 'destructive' : 'default'}
+          variant={{ error: 'destructive', done: 'success' }[syncState] || 'default'}
           className="gap-2"
         >
           {syncState === 'done' ? <Check />
