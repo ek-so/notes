@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { House, MagnifyingGlass } from '@phosphor-icons/react'
+import { House } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
@@ -8,8 +8,7 @@ import {
 // Breadcrumbs in the fixed header. Every level but the last is a link.
 // `current` overrides the last crumb's name (used in Editor for the display name).
 // `changed` shows an unsaved-changes dot on the last crumb.
-// `onSearch` adds a search button before the home crumb.
-export default function PathBreadcrumbs({ root, path, current, changed, onNavigate, onSearch }) {
+export default function PathBreadcrumbs({ root, path, current, changed, onNavigate }) {
   const parts = path.split('/').filter(Boolean)
   const crumbs = [
     { name: root, path: '' },
@@ -18,13 +17,7 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
   if (current) crumbs[crumbs.length - 1].name = current
 
   return (
-    <div className="flex items-center gap-1 min-w-0">
-      {onSearch && (
-        <Button variant="ghost-outline" size="icon" aria-label="Search" className="shrink-0 border-muted-foreground/50 -ml-2 mr-0.5" onClick={onSearch}>
-          <MagnifyingGlass />
-        </Button>
-      )}
-      <Breadcrumb>
+    <Breadcrumb>
         <BreadcrumbList className="flex-nowrap text-base">
           {crumbs.map((crumb, i) => (
             <Fragment key={crumb.path}>
@@ -35,17 +28,15 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
                     {i === 0 ? <House className="size-4" /> : crumb.name}
                     {changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
                   </BreadcrumbPage>
+                ) : i === 0 ? (
+                  <Button variant="ghost-outline" size="icon" className="shrink-0 border-muted-foreground/50" onClick={() => onNavigate(crumb.path)}>
+                    <House />
+                  </Button>
                 ) : (
                   <BreadcrumbLink asChild>
-                    {i === 0 ? (
-                      <Button variant="ghost-outline" size="icon" className="shrink-0 border-muted-foreground/50" onClick={() => onNavigate(crumb.path)}>
-                        <House />
-                      </Button>
-                    ) : (
-                      <button onClick={() => onNavigate(crumb.path)}>
-                        <span className="truncate max-w-40">{crumb.name}</span>
-                      </button>
-                    )}
+                    <button onClick={() => onNavigate(crumb.path)}>
+                      <span className="truncate max-w-40">{crumb.name}</span>
+                    </button>
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
@@ -53,6 +44,5 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-    </div>
   )
 }

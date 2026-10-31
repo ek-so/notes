@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, FileText, Folder } from '@phosphor-icons/react'
+import { Plus, FileText, Folder, MagnifyingGlass } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
 import Header from './Header.jsx'
@@ -65,11 +65,14 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         start={
           path ? (
             <div className="flex-1 min-w-0">
-              <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} onSearch={onSearch} />
+              <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} />
             </div>
           ) : menu
         }
       >
+        <Button variant="ghost-outline" size="icon" aria-label="Search" className="shrink-0 border-muted-foreground/50" onClick={onSearch}>
+          <MagnifyingGlass />
+        </Button>
         {path && (
           <ItemMenu item={{ name: currentFolder, path, type: 'dir' }} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
         )}

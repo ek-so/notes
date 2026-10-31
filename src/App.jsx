@@ -169,7 +169,6 @@ export default function App() {
                 onTheme={setTheme}
                 onSettings={() => setShowSettings(true)}
                 onSignOut={() => repo.changeCount ? setConfirmSignOut(true) : signOut()}
-                onSearch={() => setSearchOpen(true)}
               />
             }
             onSelect={setSelectedFile}
@@ -204,14 +203,15 @@ export default function App() {
         />
       )}
 
-      <SearchSheet
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelect={path => { setSelectedFile(path); setFolder('') }}
-        virtual={virtual}
-        changes={changes}
-        recent={storage.getRecentFiles()}
-      />
+      {searchOpen && (
+        <SearchSheet
+          onClose={() => setSearchOpen(false)}
+          onSelect={path => { setSelectedFile(path); setFolder('') }}
+          virtual={virtual}
+          changes={changes}
+          recent={storage.getRecentFiles()}
+        />
+      )}
     </div>
   )
 }

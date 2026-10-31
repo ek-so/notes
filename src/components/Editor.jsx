@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { flushSync } from 'react-dom'
-import { Check } from '@phosphor-icons/react'
+import { Check, MagnifyingGlass } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import Header from './Header.jsx'
 import ItemMenu from './ItemMenu.jsx'
@@ -41,10 +41,13 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
       <Header
         start={
           <div className="flex-1 min-w-0">
-            <PathBreadcrumbs root={root} path={path} current={fileName} changed={ready && edited !== undefined} onNavigate={onNavigate} onSearch={onSearch} />
+            <PathBreadcrumbs root={root} path={path} current={fileName} changed={ready && edited !== undefined} onNavigate={onNavigate} />
           </div>
         }
       >
+        <Button variant="ghost-outline" size="icon" aria-label="Search" className="shrink-0 border-muted-foreground/50" onClick={onSearch}>
+          <MagnifyingGlass />
+        </Button>
         <ItemMenu item={{ name: path.split('/').pop(), path, type: 'file' }} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
         {mode === 'edit' && (
           // For desktop, where there's no keyboard Done
