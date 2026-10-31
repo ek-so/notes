@@ -18,6 +18,8 @@ const fetchOriginal = sha => sha === null ? Promise.resolve('') : getBlob(sha)
 
 const DOUBLE_TAP_MS = 350
 const DOUBLE_TAP_PX = 30
+const DRAG_PX = 10
+const LONG_PRESS_MS = 400
 
 // Text node and offset under a screen point
 function caretAt(x, y) {
@@ -41,6 +43,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
   const onEditRef = useRef(onEdit)
   const lastTapRef = useRef(null)
   const caretRef = useRef(null) // cursor position to set when switching to edit
+  const dragRef = useRef(null)
 
   useEffect(() => { onEditRef.current = onEdit }, [onEdit])
 
@@ -134,6 +137,24 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
     textarea.focus()
   }
 
+  // Dragging the text while typing hides the keyboard, like iOS Notes. A long
+  // press (text selection) doesn't count. Tapping the text brings it back.
+  function handleTextTouchStart(e) {
+    const focused = document.activeElement === e.currentTarget
+    dragRef.current = focused ? { y: e.touches[0].clientY, time: e.timeStamp } : null
+  }
+
+  function handleTextTouchMove(e) {
+    const drag = dragRef.current
+    if (!drag) return
+    if (e.timeStamp - drag.time > LONG_PRESS_MS) {
+      dragRef.current = null
+    } else if (Math.abs(e.touches[0].clientY - drag.y) > DRAG_PX) {
+      dragRef.current = null
+      e.currentTarget.blur()
+    }
+  }
+
   function handleChange(value) {
     pendingRef.current = value
     setContent(value)
@@ -215,6 +236,8 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
           style={{ WebkitOverflowScrolling: 'touch' }}
           value={content}
           onChange={e => handleChange(e.target.value)}
+          onTouchStart={handleTextTouchStart}
+          onTouchMove={handleTextTouchMove}
           spellCheck="true"
           autoCorrect="on"
           placeholder="Start writing…"
