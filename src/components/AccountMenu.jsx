@@ -23,7 +23,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64" onCloseAutoFocus={e => e.preventDefault()}>
-        <div className="flex rounded-md bg-segment mx-1 my-1" role="radiogroup" aria-label="Theme">
+        <div className="flex h-11 gap-1 rounded-lg bg-segment p-1 mx-1 my-1" role="radiogroup" aria-label="Theme">
           {THEMES.map(([value, label, Icon]) => (
             <Button
               key={value}
@@ -33,7 +33,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
               aria-checked={theme === value}
               aria-label={label}
               onClick={() => onTheme(value)}
-              className={cn('flex-1', theme === value ? 'bg-segment-active text-foreground shadow-sm hover:bg-segment-active' : 'text-muted-foreground')}
+              className={cn('h-9 flex-1 rounded-sm', theme === value ? 'bg-segment-active text-foreground shadow-sm hover:bg-segment-active' : 'text-muted-foreground')}
             ><Icon /></Button>
           ))}
         </div>
