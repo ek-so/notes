@@ -1,14 +1,15 @@
 import { List, Sun, Moon, Monitor, Gear, SignOut } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from './ui/dropdown-menu.jsx'
 import { cn } from '@/lib/utils.js'
 
 const THEMES = [['light', 'Light', Sun], ['dark', 'Dark', Moon], ['system', 'System', Monitor]]
 
 // Home header's left side: ☰ owner / repo, opening the account popover.
-export default function AccountMenu({ login, repo, theme, onTheme, onSettings, onSignOut }) {
+// The account is shown in Settings; the header already names the owner.
+export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOut }) {
   const [owner, name] = repo.split('/')
   return (
     <DropdownMenu>
@@ -22,7 +23,6 @@ export default function AccountMenu({ login, repo, theme, onTheme, onSettings, o
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64" onCloseAutoFocus={e => e.preventDefault()}>
-        <DropdownMenuLabel className="text-xl font-bold truncate">@{login}</DropdownMenuLabel>
         <div className="flex rounded-md bg-secondary mx-1 my-1" role="radiogroup" aria-label="Theme">
           {THEMES.map(([value, label, Icon]) => (
             <Button

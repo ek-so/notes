@@ -141,7 +141,6 @@ export default function App() {
             onDelete={handleDelete}
             menu={
               <AccountMenu
-                login={auth.user.login}
                 repo={auth.repo}
                 theme={theme}
                 onTheme={setTheme}
