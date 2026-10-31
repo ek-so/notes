@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { flushSync } from 'react-dom'
 import { getBlob, getBlobBase64 } from '../lib/github.js'
 import DOMPurify from 'dompurify'
-import { renderBlocks, tapOffset, resolveImage } from '../lib/markdown.js'
+import { renderBlocks, tapOffset, resolveImage, highlightMarkdown } from '../lib/markdown.js'
+import { cn } from '@/lib/utils.js'
 import Header from './Header.jsx'
 import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 
@@ -13,6 +14,9 @@ const MIME = {
 
 // GitHub's version of a note; '' for one created on this device
 const fetchOriginal = sha => sha === null ? Promise.resolve('') : getBlob(sha)
+
+// Shared by the markdown textarea and its styling layer so they line up exactly
+const TEXT_LAYOUT = 'w-full h-full px-5 py-4 font-mono text-base leading-relaxed whitespace-pre-wrap break-words'
 
 const DRAG_PX = 10
 const LONG_PRESS_MS = 400
@@ -38,6 +42,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
   const pendingRef = useRef(null)
   const onEditRef = useRef(onEdit)
   const previewRef = useRef()
+  const highlightRef = useRef()
   const editedAtRef = useRef(null) // source offset to bring into view back in preview
   const dragRef = useRef(null)
 
@@ -163,6 +168,8 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
 
   const changed = edited !== undefined
   const fileName = path.split('/').pop().replace(/\.md$/, '')
+  const highlighted = useMemo(() => mode === 'edit' ? highlightMarkdown(content) : '', [mode, content])
+
   // Preview HTML with repo images swapped for loaded data URLs
   const [preview, imagePaths] = useMemo(() => {
     if (mode !== 'preview') return ['', []]
@@ -217,19 +224,29 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
       <PathBreadcrumbs root={root} path={path} current={fileName} onNavigate={onNavigate} />
 
       {mode === 'edit' ? (
-        <textarea
-          ref={textareaRef}
-          className="flex-1 w-full px-5 py-4 bg-background text-foreground resize-none outline-none font-mono text-base leading-relaxed"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-          value={content}
-          onChange={e => handleChange(e.target.value)}
-          onBlur={handleTextBlur}
-          onTouchStart={handleTextTouchStart}
-          onTouchMove={handleTextTouchMove}
-          spellCheck="true"
-          autoCorrect="on"
-          placeholder="Start writing…"
-        />
+        // Transparent textarea over a styled copy of the same text
+        <div className="relative flex-1 min-h-0 bg-background">
+          <pre
+            ref={highlightRef}
+            aria-hidden="true"
+            className={cn(TEXT_LAYOUT, 'absolute inset-0 overflow-hidden m-0 text-foreground pointer-events-none')}
+            dangerouslySetInnerHTML={{ __html: highlighted }}
+          />
+          <textarea
+            ref={textareaRef}
+            className={cn(TEXT_LAYOUT, 'absolute inset-0 overflow-y-auto bg-transparent text-transparent caret-foreground selection:bg-primary/30 resize-none outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden')}
+            style={{ WebkitOverflowScrolling: 'touch' }}
+            value={content}
+            onChange={e => handleChange(e.target.value)}
+            onScroll={e => { highlightRef.current.scrollTop = e.currentTarget.scrollTop }}
+            onBlur={handleTextBlur}
+            onTouchStart={handleTextTouchStart}
+            onTouchMove={handleTextTouchMove}
+            spellCheck="true"
+            autoCorrect="on"
+            placeholder="Start writing…"
+          />
+        </div>
       ) : (
         <div
           className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed touch-manipulation [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"

@@ -17,3 +17,18 @@ describe('markdown', () => {
     expect(tapOffset(raw, 'a cat and ', ' ')).toBe(0)
   })
 })
+
+describe('highlightMarkdown', () => {
+  it('styles markdown without changing the text', async () => {
+    const { highlightMarkdown } = await import('./markdown.js')
+    const md = '# Title\nSee [docs](a.md), **bold** and *it* <u>u</u> snake_case_name'
+    const html = highlightMarkdown(md)
+    const text = html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    expect(text).toBe(md + ' ')
+    expect(html).toContain('<span class="text-primary">[docs](a.md)</span>')
+    expect(html).toContain('<span class="font-bold">**bold**</span>')
+    expect(html).toContain('<span class="italic">*it*</span>')
+    expect(html).not.toContain('<span class="italic">_case_</span>')
+    expect(highlightMarkdown('[docs(a.md)')).not.toContain('text-primary')
+  })
+})

@@ -52,3 +52,43 @@ export function resolveImage(notePath, src) {
   }
   return parts.join('/')
 }
+
+const escapeHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+// Inline markdown, matched left to right on escaped text. Each pattern is
+// wrapped as a whole, markers included, so the text keeps its exact length.
+const INLINE = [
+  ['text-muted-foreground', /`[^`\n]+`/],
+  ['text-primary', /!?\[[^\]\n]*\]\([^)\n]*\)/],
+  ['text-primary', /https?:\/\/[^\s<)]+/],
+  ['font-bold', /\*\*(?!\s)[^*\n]+?\*\*|__(?!\s)[^_\n]+?__/],
+  ['italic', /(?<![\w*])\*(?![\s*])[^*\n]+?\*(?!\*)|(?<![\w_])_(?![\s_])[^_\n]+?_(?![\w_])/],
+  ['line-through', /~~[^~\n]+~~/],
+  ['underline', /&lt;u&gt;.+?&lt;\/u&gt;/],
+]
+const INLINE_RE = new RegExp(INLINE.map(([, re]) => `(${re.source})`).join('|'), 'g')
+
+function highlightInline(line) {
+  return line.replace(INLINE_RE, (match, ...groups) => {
+    const kind = INLINE[groups.findIndex(g => g !== undefined)][0]
+    return `<span class="${kind}">${match}</span>`
+  })
+}
+
+// HTML for the styling layer behind the markdown editor: same characters as
+// `text`, with links/images in the accent color and bold/italic/etc. styled.
+export function highlightMarkdown(text) {
+  let inFence = false
+  const lines = text.split('\n').map(raw => {
+    const line = escapeHtml(raw)
+    if (/^\s*(```|~~~)/.test(raw)) {
+      inFence = !inFence
+      return `<span class="text-muted-foreground">${line}</span>`
+    }
+    if (inFence) return `<span class="text-muted-foreground">${line}</span>`
+    if (/^#{1,6}\s/.test(raw)) return `<span class="font-bold">${highlightInline(line)}</span>`
+    return highlightInline(line)
+  })
+  // A trailing space keeps a final empty line as tall as in the textarea
+  return lines.join('\n') + ' '
+}
