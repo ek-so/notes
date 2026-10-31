@@ -24,7 +24,7 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 
 ## Design system — shadcn/ui + Tailwind v4
 
-**Stack:** shadcn/ui (new-york style) · Tailwind CSS v4 · Radix UI primitives · Phosphor icons (`@phosphor-icons/react`, regular weight; emoji for file/folder icons)
+**Stack:** shadcn/ui (new-york style) · Tailwind CSS v4 · Radix UI primitives · Phosphor icons (`@phosphor-icons/react`, regular weight — except ⋯ `DotsThree`, bold for visibility; emoji for file/folder icons)
 
 ### Rules
 - Use shadcn components from `src/components/ui/` for all interactive elements. Add new ones with `npx shadcn@latest add <component>`.
