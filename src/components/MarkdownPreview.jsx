@@ -23,8 +23,9 @@ const repoImages = (html, notePath) => {
 
 // Rendered note. Tapping text (not links or images) calls onTap with the
 // markdown offset of the tapped word. On mount, scrolls the block holding
-// `scrollTo` (a markdown offset) into view.
-export default function MarkdownPreview({ content, path, files, scrollTo, onTap }) {
+// `scrollTo` (a markdown offset) into view. `children` render above the
+// note and scroll with it.
+export default function MarkdownPreview({ content, path, files, scrollTo, onTap, children }) {
   const ref = useRef()
 
   const [html, imagePaths] = useMemo(() => {
@@ -72,12 +73,14 @@ export default function MarkdownPreview({ content, path, files, scrollTo, onTap 
   }
 
   return (
-    <div
-      ref={ref}
-      className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed touch-manipulation [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
-      style={{ WebkitOverflowScrolling: 'touch' }}
-      onClick={handleClick}
-      dangerouslySetInnerHTML={{ __html: withImages || '<p class="text-muted-foreground italic">Nothing to preview yet.</p>' }}
-    />
+    <div className="flex-1 min-h-0 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {children}
+      <div
+        ref={ref}
+        className="editor-preview px-5 py-4 text-base leading-relaxed touch-manipulation [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
+        onClick={handleClick}
+        dangerouslySetInnerHTML={{ __html: withImages || '<p class="text-muted-foreground italic">Nothing to preview yet.</p>' }}
+      />
+    </div>
   )
 }

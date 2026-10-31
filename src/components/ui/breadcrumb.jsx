@@ -11,7 +11,7 @@ function BreadcrumbList({ className, ...props }) {
   return (
     <ol
       data-slot="breadcrumb-list"
-      className={cn('text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words', className)}
+      className={cn('text-muted-foreground flex flex-wrap items-center gap-x-1.5 gap-y-0 text-sm', className)}
       {...props}
     />
   )
@@ -24,7 +24,7 @@ function BreadcrumbItem({ className, ...props }) {
 function BreadcrumbLink({ asChild, className, ...props }) {
   const Comp = asChild ? Slot : 'a'
   return (
-    <Comp data-slot="breadcrumb-link" className={cn('inline-flex min-h-11 items-center hover:text-foreground transition-colors', className)} {...props} />
+    <Comp data-slot="breadcrumb-link" className={cn("relative block h-6 leading-6 hover:text-foreground transition-colors after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-['']", className)} {...props} />
   )
 }
 
@@ -35,7 +35,7 @@ function BreadcrumbPage({ className, ...props }) {
       role="link"
       aria-disabled="true"
       aria-current="page"
-      className={cn('inline-flex min-h-11 items-center text-foreground font-normal', className)}
+      className={cn('block h-6 max-w-40 truncate leading-6 text-foreground font-normal', className)}
       {...props}
     />
   )
