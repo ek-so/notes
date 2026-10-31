@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify'
 import { renderBlocks, tapOffset, resolveImage } from '../lib/markdown.js'
 import { Hash, PaintBrush } from '@phosphor-icons/react'
 import Header from './Header.jsx'
+import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 import { cn } from '@/lib/utils.js'
 
 const MIME = {
@@ -28,7 +29,7 @@ function caretAt(x, y) {
   return p && { node: p.offsetNode, offset: p.offset }
 }
 
-export default function Editor({ path, entry, files, edited, onEdit, onClose, onHome }) {
+export default function Editor({ path, root, entry, files, edited, onEdit, onClose, onNavigate }) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -173,7 +174,8 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
   if (loading || loadError) {
     return (
       <div className="flex flex-col flex-1 min-h-0">
-        <Header title={fileName} onHome={onHome} onBack={onClose} />
+        <Header title={fileName} onBack={onClose} />
+        <PathBreadcrumbs root={root} path={path} current={fileName} onNavigate={onNavigate} />
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
@@ -189,17 +191,17 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <Header title={fileName} changed={changed} onHome={onHome} onBack={onClose}>
+      <Header title={fileName} changed={changed} onBack={onClose}>
         <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
           <button
-            className={cn('px-2.5 py-1.5 rounded-md transition-colors',
+            className={cn('flex h-10 w-11 items-center justify-center rounded-md transition-colors',
               mode === 'edit' ? 'bg-card text-foreground' : 'text-muted-foreground')}
             onClick={() => setMode('edit')}
             aria-label="Markdown"
             aria-pressed={mode === 'edit'}
           ><Hash className="size-4" /></button>
           <button
-            className={cn('px-2.5 py-1.5 rounded-md transition-colors',
+            className={cn('flex h-10 w-11 items-center justify-center rounded-md transition-colors',
               mode === 'preview' ? 'bg-card text-foreground' : 'text-muted-foreground')}
             onClick={() => setMode('preview')}
             aria-label="Preview"
@@ -207,6 +209,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
           ><PaintBrush className="size-4" /></button>
         </div>
       </Header>
+      <PathBreadcrumbs root={root} path={path} current={fileName} onNavigate={onNavigate} />
 
       {mode === 'edit' ? (
         <textarea

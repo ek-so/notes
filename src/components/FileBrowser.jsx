@@ -1,11 +1,9 @@
-import { useState, Fragment } from 'react'
+import { useState } from 'react'
 import { Plus, FileText, Folder, PencilSimple, Trash, DotsThree } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
-import {
-  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
-} from './ui/breadcrumb.jsx'
 import Header from './Header.jsx'
+import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 import RenameModal from './RenameModal.jsx'
 import DeleteModal from './DeleteModal.jsx'
 import { cn } from '@/lib/utils.js'
@@ -29,10 +27,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
 
   const repoName = repo ? repo.split('/')[1] : 'Notes'
   const currentFolder = path ? path.split('/').pop() : repoName
-  // Home, then every folder level down to the current one
-  const crumbs = [{ name: repoName, path: '' }, ...path.split('/').filter(Boolean).map((name, i, parts) => (
-    { name, path: parts.slice(0, i + 1).join('/') }
-  ))]
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -44,7 +38,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" aria-label="New" className="shrink-0">
-              <Plus className="size-5" />
+              <Plus />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
@@ -54,26 +48,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         </DropdownMenu>
       </Header>
 
-      {path && (
-        <Breadcrumb className="px-4 pt-3">
-          <BreadcrumbList>
-            {crumbs.map((crumb, i) => (
-              <Fragment key={crumb.path}>
-                {i > 0 && <BreadcrumbSeparator />}
-                <BreadcrumbItem>
-                  {i === crumbs.length - 1 ? (
-                    <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild>
-                      <button onClick={() => onNavigate(crumb.path)}>{crumb.name}</button>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </Fragment>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
-      )}
+      {path && <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} />}
 
       {loading && (
         <div className="flex justify-center py-12">
@@ -114,7 +89,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" aria-label="More actions"
-                        className="shrink-0 text-muted-foreground"><DotsThree className="size-5" /></Button>
+                        className="shrink-0 text-muted-foreground"><DotsThree /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
                       <DropdownMenuItem onSelect={() => setRenameItem(item)}><PencilSimple /> Rename</DropdownMenuItem>

@@ -50,11 +50,11 @@ export default function RepoSetup({ user, onRepo, onLogout }) {
             className="font-mono h-12 text-base bg-card border-border"
           />
           {error && <p className="text-destructive text-xs text-center">{error}</p>}
-          <Button type="submit" disabled={loading || !value.trim()} className="w-full h-12">
+          <Button type="submit" disabled={loading || !value.trim()} className="w-full">
             {loading ? 'Connecting…' : 'Connect'}
           </Button>
         </form>
-        <Button variant="ghost" size="sm" onClick={onLogout} className="text-muted-foreground">
+        <Button variant="ghost" onClick={onLogout} className="text-muted-foreground">
           Sign out
         </Button>
       </div>

@@ -41,7 +41,7 @@ export default function Auth({ onAuth }) {
             className="font-mono tracking-wide h-12 text-base bg-card border-border"
           />
           {error && <p className="text-destructive text-xs text-center">{error}</p>}
-          <Button type="submit" disabled={loading || !token.trim()} className="w-full h-12">
+          <Button type="submit" disabled={loading || !token.trim()} className="w-full">
             {loading ? 'Connecting…' : 'Connect'}
           </Button>
         </form>

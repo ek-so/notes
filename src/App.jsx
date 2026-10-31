@@ -122,7 +122,8 @@ export default function App() {
             onEdit={(content, original) =>
               update(ch => setEdit(ch, virtual[selectedFile], content, original))}
             onClose={() => setSelectedFile(null)}
-            onHome={() => { setFolder(''); setSelectedFile(null) }}
+            root={auth.repo.split('/')[1]}
+            onNavigate={p => { setFolder(p); setSelectedFile(null) }}
           />
         ) : (
           <FileBrowser
@@ -156,10 +157,10 @@ export default function App() {
           variant={syncState === 'error' ? 'destructive' : 'default'}
           className="gap-2"
         >
-          {syncState === 'done' ? <Check className="size-4" />
-            : syncState === 'error' ? <X className="size-4" />
-            : syncState === 'offline' ? <CloudSlash className="size-4" />
-            : <ArrowsClockwise className={cn('size-4', syncing && 'animate-spin')} />}
+          {syncState === 'done' ? <Check />
+            : syncState === 'error' ? <X />
+            : syncState === 'offline' ? <CloudSlash />
+            : <ArrowsClockwise className={cn(syncing && 'animate-spin')} />}
           {{ done: 'Synced', error: 'Failed', offline: 'Offline' }[syncState] || 'Sync'}
           {repo.changeCount > 0 && syncState === 'idle' && !syncing && (
             <span className="bg-primary-foreground text-primary rounded-full text-[11px] min-w-5 h-5 px-1 flex items-center justify-center font-semibold">
@@ -177,7 +178,7 @@ export default function App() {
           </SheetHeader>
           <div className="px-2">
             <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
-              {theme === 'dark' ? <><Sun className="size-5" /> Light theme</> : <><Moon className="size-5" /> Dark theme</>}
+              {theme === 'dark' ? <><Sun /> Light theme</> : <><Moon /> Dark theme</>}
             </Button>
           </div>
           <SheetFooter>
