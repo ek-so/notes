@@ -13,7 +13,7 @@ export default function BottomSheet({ title, description, onClose, onOpenAutoFoc
         className="mx-auto w-full max-w-[680px] gap-4 rounded-t-2xl bg-card p-6"
         style={{
           bottom: keyboard,
-          paddingBottom: keyboard ? '1.5rem' : 'max(1.5rem, var(--safe-bottom))',
+          paddingBottom: keyboard ? '1.5rem' : 'calc(1.5rem + var(--safe-bottom))',
         }}
         {...(description ? {} : { 'aria-describedby': undefined })}
         onOpenAutoFocus={onOpenAutoFocus}
