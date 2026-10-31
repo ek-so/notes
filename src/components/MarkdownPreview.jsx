@@ -49,7 +49,7 @@ const repoImages = (html, notePath) => {
 // markdown offset of the tapped word. On mount, scrolls the block holding
 // `scrollTo` (a markdown offset) into view. `children` render above the
 // note and scroll with it.
-export default function MarkdownPreview({ content, path, files, scrollTo, onTap, onOpenFile, onNavigate, title, children }) {
+export default function MarkdownPreview({ content, path, files, scrollTo, onTap, onOpenFile, onNavigate, children }) {
   const ref = useRef()
   const [brokenTip, setBrokenTip] = useState(null)
   const tipTimer = useRef()
@@ -156,11 +156,6 @@ export default function MarkdownPreview({ content, path, files, scrollTo, onTap,
   return (
     <div className="flex-1 min-h-0 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
       {children}
-      {title && (
-        <h1 className="px-5 pt-5 text-2xl font-bold leading-tight text-foreground">
-          {title}
-        </h1>
-      )}
       <div
         ref={ref}
         className="editor-preview px-5 py-4 text-base leading-relaxed touch-manipulation [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"

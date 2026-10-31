@@ -36,6 +36,13 @@ export default function App() {
   useEffect(() => { storage.setFile(selectedFile) }, [selectedFile])
   useEffect(() => { storage.setSettingsOpen(showSettings) }, [showSettings])
 
+  // Keep browser URL in sync with the current view
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL
+    const url = selectedFile ? base + selectedFile : folder ? base + folder + '/' : base
+    if (window.location.pathname !== url) history.replaceState(null, '', url)
+  }, [selectedFile, folder])
+
   const { virtual, changes, update } = repo
 
   function handleRename(item, name) {
