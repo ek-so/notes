@@ -4,6 +4,8 @@ import { getBlob, getBlobBase64 } from '../lib/github.js'
 import DOMPurify from 'dompurify'
 import { renderBlocks, tapOffset, resolveImage, highlightMarkdown } from '../lib/markdown.js'
 import { cn } from '@/lib/utils.js'
+import { Check } from '@phosphor-icons/react'
+import { Button } from './ui/button.jsx'
 import Header from './Header.jsx'
 import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 
@@ -157,14 +159,20 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
     }
   }
 
-  // Keyboard closed with Done (or by tapping elsewhere): back to preview
-  function handleTextBlur(e) {
+  // Back to preview, showing the part that was being edited. Edits are
+  // already saved; this only switches modes.
+  function finishEditing() {
+    editedAtRef.current = textareaRef.current?.selectionStart ?? null
+    setMode('preview')
+  }
+
+  // Keyboard closed with iOS Done (or by tapping elsewhere): back to preview
+  function handleTextBlur() {
     if (keepEditingRef.current) {
       keepEditingRef.current = false
       return
     }
-    editedAtRef.current = e.currentTarget.selectionStart
-    setMode('preview')
+    finishEditing()
   }
 
   function handleChange(value) {
@@ -226,7 +234,14 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <Header title={fileName} changed={changed} onBack={onClose} />
+      <Header title={fileName} changed={changed} onBack={onClose}>
+        {mode === 'edit' && (
+          // Also reachable after scrolling hid the keyboard (and its Done)
+          <Button variant="ghost" size="icon" onClick={finishEditing} aria-label="Done" className="shrink-0">
+            <Check />
+          </Button>
+        )}
+      </Header>
       <PathBreadcrumbs root={root} path={path} current={fileName} onNavigate={onNavigate} />
 
       {mode === 'edit' ? (
@@ -246,6 +261,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
             onChange={e => handleChange(e.target.value)}
             onScroll={e => { highlightRef.current.scrollTop = e.currentTarget.scrollTop }}
             onBlur={handleTextBlur}
+            onKeyDown={e => e.key === 'Escape' && e.currentTarget.blur()}
             onTouchStart={handleTextTouchStart}
             onTouchMove={handleTextTouchMove}
             spellCheck="true"
