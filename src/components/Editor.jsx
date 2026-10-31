@@ -40,7 +40,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
     <div className="flex flex-col flex-1 min-h-0">
       <Header title={fileName} changed={ready && edited !== undefined} onBack={onClose}>
         {mode === 'edit' && (
-          // Also reachable after scrolling hid the keyboard (and its Done)
+          // For desktop, where there's no keyboard Done
           <Button variant="ghost" size="icon" onClick={finishEditing} aria-label="Done" className="shrink-0">
             <Check />
           </Button>

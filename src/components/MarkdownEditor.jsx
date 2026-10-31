@@ -11,13 +11,12 @@ const LONG_PRESS_MS = 400
 // Markdown text box with live styling: a transparent textarea over a styled
 // copy of the same text. The ref is the textarea.
 //
-// Dragging the text while typing hides the keyboard (like iOS Notes) and
-// stays here; a long press (text selection) doesn't count. Closing the
-// keyboard otherwise (iOS Done, tapping elsewhere, Escape) calls onDone.
+// Closing the keyboard in any way calls onDone (back to preview): iOS Done,
+// tapping elsewhere, Escape, or dragging the text while typing. A long
+// press (text selection) doesn't count as a drag.
 const MarkdownEditor = forwardRef(function MarkdownEditor({ content, onChange, onDone }, textareaRef) {
   const highlightRef = useRef()
   const dragRef = useRef(null)
-  const keepEditingRef = useRef(false)
   const highlighted = useMemo(() => highlightMarkdown(content), [content])
 
   function handleTouchStart(e) {
@@ -32,17 +31,8 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ content, onChange, o
       dragRef.current = null
     } else if (Math.abs(e.touches[0].clientY - drag.y) > DRAG_PX) {
       dragRef.current = null
-      keepEditingRef.current = true
       e.currentTarget.blur()
     }
-  }
-
-  function handleBlur() {
-    if (keepEditingRef.current) {
-      keepEditingRef.current = false
-      return
-    }
-    onDone()
   }
 
   return (
@@ -61,7 +51,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ content, onChange, o
         value={content}
         onChange={e => onChange(e.target.value)}
         onScroll={e => { highlightRef.current.scrollTop = e.currentTarget.scrollTop }}
-        onBlur={handleBlur}
+        onBlur={onDone}
         onKeyDown={e => e.key === 'Escape' && e.currentTarget.blur()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
