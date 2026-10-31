@@ -75,7 +75,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                   currentPath === item.path && 'bg-primary/10'
                 )}>
                   <button
-                    className="flex-1 min-w-0 flex items-center gap-3 pl-4 py-3 text-left disabled:cursor-default"
+                    className="flex-1 min-w-0 flex min-h-11 items-center gap-3 pl-4 text-left disabled:cursor-default"
                     onClick={() => navigate(item)}
                     disabled={!openable}
                   >

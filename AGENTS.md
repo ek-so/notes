@@ -30,7 +30,7 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 - Use shadcn components from `src/components/ui/` for all interactive elements. Add new ones with `npx shadcn@latest add <component>`.
 - Use Tailwind utility classes for layout and spacing. Never write custom CSS for things Tailwind covers.
 - Use `cn()` from `@/lib/utils` to merge classes conditionally.
-- **One button size.** Every button and tap target is 44px tall: `Button` (default), `size="icon"` (44×44), menu items, breadcrumb links. Don't override button heights or add size variants. Controls inside a 44px group (e.g. the mode switch) may be 40px.
+- **One control size.** Every tappable or input element is 44px tall: `Button` (default), `size="icon"` (44×44, also inside groups like the mode switch), `Input`, menu items, list rows, breadcrumb links, sheet close. Build controls from `Button`/`Input` instead of raw elements; don't override heights or add size variants.
 - **Icons are 16px** (`size-4`). `Button` and menu items size icons by default — don't pass size classes.
 - **Every screen uses `Header`.** Inner screens (folders, notes) show `← title` and `PathBreadcrumbs` below it; no separate home button.
 - Never hardcode colors — use Tailwind semantic tokens (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary`, etc.).

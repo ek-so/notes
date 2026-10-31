@@ -4,9 +4,9 @@ import { getBlob, getBlobBase64 } from '../lib/github.js'
 import DOMPurify from 'dompurify'
 import { renderBlocks, tapOffset, resolveImage } from '../lib/markdown.js'
 import { Hash, PaintBrush } from '@phosphor-icons/react'
+import { Button } from './ui/button.jsx'
 import Header from './Header.jsx'
 import PathBreadcrumbs from './PathBreadcrumbs.jsx'
-import { cn } from '@/lib/utils.js'
 
 const MIME = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
@@ -192,21 +192,18 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <Header title={fileName} changed={changed} onBack={onClose}>
-        <div className="flex bg-secondary rounded-lg p-0.5 shrink-0">
-          <button
-            className={cn('flex h-10 w-11 items-center justify-center rounded-md transition-colors',
-              mode === 'edit' ? 'bg-card text-foreground' : 'text-muted-foreground')}
-            onClick={() => setMode('edit')}
-            aria-label="Markdown"
-            aria-pressed={mode === 'edit'}
-          ><Hash className="size-4" /></button>
-          <button
-            className={cn('flex h-10 w-11 items-center justify-center rounded-md transition-colors',
-              mode === 'preview' ? 'bg-card text-foreground' : 'text-muted-foreground')}
-            onClick={() => setMode('preview')}
-            aria-label="Preview"
-            aria-pressed={mode === 'preview'}
-          ><PaintBrush className="size-4" /></button>
+        <div className="flex rounded-md bg-secondary shrink-0">
+          {[['edit', 'Markdown', <Hash key="i" />], ['preview', 'Preview', <PaintBrush key="i" />]].map(([value, label, icon]) => (
+            <Button
+              key={value}
+              variant="ghost"
+              size="icon"
+              onClick={() => setMode(value)}
+              aria-label={label}
+              aria-pressed={mode === value}
+              className={mode === value ? 'bg-card text-foreground shadow-sm hover:bg-card' : 'text-muted-foreground'}
+            >{icon}</Button>
+          ))}
         </div>
       </Header>
       <PathBreadcrumbs root={root} path={path} current={fileName} onNavigate={onNavigate} />

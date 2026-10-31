@@ -28,7 +28,7 @@ export default function NewFileModal({ folder, kind, onCreate, onClose }) {
           onChange={e => { setName(e.target.value); setError('') }}
           autoCorrect="off"
           autoCapitalize="words"
-          className="h-11 bg-background border-border"
+          className="bg-background border-border"
         />
         {error && <p className="text-destructive text-xs">{error}</p>}
         <div className="flex gap-2">

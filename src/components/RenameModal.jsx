@@ -32,7 +32,7 @@ export default function RenameModal({ item, onRename, onClose }) {
             value={name}
             onChange={e => { setName(e.target.value); setError('') }}
             autoCorrect="off"
-            className="h-11 bg-background border-border"
+            className="bg-background border-border"
           />
           {ext && <span className="text-muted-foreground shrink-0">{ext}</span>}
         </div>

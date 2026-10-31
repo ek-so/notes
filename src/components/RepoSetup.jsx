@@ -47,7 +47,7 @@ export default function RepoSetup({ user, onRepo, onLogout }) {
             autoCorrect="off"
             autoCapitalize="none"
             spellCheck="false"
-            className="font-mono h-12 text-base bg-card border-border"
+            className="font-mono bg-card border-border"
           />
           {error && <p className="text-destructive text-xs text-center">{error}</p>}
           <Button type="submit" disabled={loading || !value.trim()} className="w-full">
