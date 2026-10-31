@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { Plus, FileText, Folder, PencilSimple, Trash, DotsThree } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
+import {
+  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
+} from './ui/breadcrumb.jsx'
 import Header from './Header.jsx'
 import RenameModal from './RenameModal.jsx'
 import DeleteModal from './DeleteModal.jsx'
@@ -26,6 +29,10 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
 
   const repoName = repo ? repo.split('/')[1] : 'Notes'
   const currentFolder = path ? path.split('/').pop() : repoName
+  // Home, then every folder level down to the current one
+  const crumbs = [{ name: repoName, path: '' }, ...path.split('/').filter(Boolean).map((name, i, parts) => (
+    { name, path: parts.slice(0, i + 1).join('/') }
+  ))]
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -47,6 +54,27 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
           </DropdownMenuContent>
         </DropdownMenu>
       </Header>
+
+      {path && (
+        <Breadcrumb className="px-4 pt-3">
+          <BreadcrumbList>
+            {crumbs.map((crumb, i) => (
+              <Fragment key={crumb.path}>
+                {i > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {i === crumbs.length - 1 ? (
+                    <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <button onClick={() => onNavigate(crumb.path)}>{crumb.name}</button>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
 
       {loading && (
         <div className="flex justify-center py-12">
