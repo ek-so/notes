@@ -23,11 +23,7 @@ export default function Auth({ onAuth }) {
   return (
     <div className="flex min-h-full items-center justify-center p-6 bg-background">
       <div className="w-full max-w-sm flex flex-col items-center gap-4">
-        <img
-          src={`${import.meta.env.BASE_URL}apple-touch-icon.png`}
-          alt=""
-          className="size-20 rounded-[22%] shadow-sm"
-        />
+        <img src={`${import.meta.env.BASE_URL}folio-logo.png`} alt="" className="size-20 object-contain" />
         <h1 className="text-2xl font-bold tracking-tight">Folio</h1>
         <p className="text-sm text-muted-foreground text-center">
           Paste a GitHub token to access your notes.
