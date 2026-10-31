@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Plus, FileText, Folder } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
@@ -12,7 +12,8 @@ import { cn } from '@/lib/utils.js'
 
 export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu }) {
   const items = loading ? [] : listDir(path)
-  const [dragging, setDragging] = useState(null)
+  const draggingRef = useRef(null) // always current for event handlers
+  const [dragging, setDragging] = useState(null) // for rendering only
   const [dragOverPath, setDragOverPath] = useState(null)
 
   function navigate(item) {
@@ -66,26 +67,31 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
             {items.map(item => {
               const [base, ext] = item.type === 'dir' ? [item.name, ''] : splitName(item.name)
               const openable = item.type === 'dir' || ext === '.md'
-              const isDropTarget = item.type === 'dir' && dragging && dragging.path !== item.path
               const isDraggedItem = dragging?.path === item.path
               return (
                 <li
                   key={item.path}
                   draggable
                   onDragStart={e => {
+                    draggingRef.current = item
                     setDragging(item)
                     e.dataTransfer.effectAllowed = 'move'
                   }}
-                  onDragEnd={() => { setDragging(null); setDragOverPath(null) }}
+                  onDragEnd={() => {
+                    draggingRef.current = null
+                    setDragging(null)
+                    setDragOverPath(null)
+                  }}
                   className={isDraggedItem ? 'opacity-40' : ''}
                 >
                   <div
                     className={cn(
                       'flex items-center pr-1 rounded-lg transition-colors',
-                      dragOverPath === item.path && isDropTarget && 'bg-primary/10 ring-1 ring-primary/40'
+                      dragOverPath === item.path && item.type === 'dir' && 'bg-primary/10 ring-1 ring-primary/40'
                     )}
                     onDragOver={e => {
-                      if (!isDropTarget) return
+                      const d = draggingRef.current
+                      if (item.type !== 'dir' || !d || d.path === item.path) return
                       e.preventDefault()
                       e.dataTransfer.dropEffect = 'move'
                       setDragOverPath(item.path)
@@ -95,9 +101,11 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                       if (!e.currentTarget.contains(e.relatedTarget)) setDragOverPath(null)
                     }}
                     onDrop={e => {
-                      if (!isDropTarget) return
+                      const d = draggingRef.current
+                      if (item.type !== 'dir' || !d || d.path === item.path) return
                       e.preventDefault()
-                      onMove?.(dragging, item.path)
+                      onMove?.(d, item.path)
+                      draggingRef.current = null
                       setDragging(null)
                       setDragOverPath(null)
                     }}

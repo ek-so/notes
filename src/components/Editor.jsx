@@ -13,7 +13,7 @@ import { displayName } from '../lib/files.js'
 
 // A note: shown as preview; tapping text edits its markdown there. Edits
 // save on their own; ✓ / Done only switches back to preview.
-export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onRename, onDelete, onMove, folders }) {
+export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onOpenFile, onRename, onDelete, onMove, folders }) {
   const { content, change, loading, loadError } = useNote(entry, edited, onEdit)
   const [mode, setMode] = useState('preview')
   const [editedAt, setEditedAt] = useState(null) // offset to show when back in preview
@@ -65,7 +65,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
         ) : mode === 'edit' ? (
           <MarkdownEditor ref={textareaRef} content={content} onChange={change} onDone={finishEditing} />
         ) : (
-          <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing} />
+          <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing} onOpenFile={onOpenFile} onNavigate={onNavigate} title={fileName} />
         )}
       </div>
     </div>

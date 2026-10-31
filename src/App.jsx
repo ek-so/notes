@@ -131,6 +131,7 @@ export default function App() {
               update(ch => setEdit(ch, virtual[selectedFile], content, original))}
             root={repoName}
             onNavigate={p => { setFolder(p); setSelectedFile(null) }}
+            onOpenFile={setSelectedFile}
             onRename={handleRename}
             onDelete={handleDelete}
             onMove={handleMove}

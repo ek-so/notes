@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { House } from '@phosphor-icons/react'
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
 } from './ui/breadcrumb.jsx'
@@ -16,7 +17,7 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
 
   return (
     <Breadcrumb>
-      <BreadcrumbList className="flex-nowrap">
+      <BreadcrumbList className="flex-nowrap text-base">
         {crumbs.map((crumb, i) => (
           <Fragment key={crumb.path}>
             {i > 0 && <BreadcrumbSeparator />}
@@ -29,7 +30,10 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
               ) : (
                 <BreadcrumbLink asChild>
                   <button onClick={() => onNavigate(crumb.path)}>
-                    <span className="block max-w-40 truncate">{crumb.name}</span>
+                    <span className="flex items-center gap-1 max-w-40">
+                      {i === 0 && <House className="size-4 shrink-0" />}
+                      <span className="truncate">{crumb.name}</span>
+                    </span>
                   </button>
                 </BreadcrumbLink>
               )}

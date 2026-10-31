@@ -19,7 +19,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
             <List />
           </Button>
         </DropdownMenuTrigger>
-        <span className="truncate text-xl select-none">
+        <span className="truncate text-base select-none">
           <span className="text-muted-foreground">{owner} / </span>
           <span className="font-bold">{name}</span>
         </span>
