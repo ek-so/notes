@@ -61,16 +61,16 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
           <p className="text-muted-foreground text-sm text-center py-12">No notes yet</p>
         )}
         {!loading && (
-          <ul className={path ? 'pb-2' : 'py-2'}>
+          <ul className={path ? 'pb-2 px-2' : 'py-2 px-2'}>
             {items.map(item => {
               const [base, ext] = item.type === 'dir' ? [item.name, ''] : splitName(item.name)
               const openable = item.type === 'dir' || ext === '.md'
               return (
                 <li key={item.path}>
-                  <div className="flex items-center pr-2 transition-colors hover:bg-secondary">
+                  <div className="flex items-center pr-2 rounded-lg transition-colors hover:bg-secondary">
                     <Button
                       variant="ghost"
-                      className="flex-1 min-w-0 justify-start gap-3 pl-4 pr-0 rounded-none font-normal text-left hover:bg-transparent disabled:opacity-100 disabled:cursor-default"
+                      className="flex-1 min-w-0 justify-start gap-3 pl-3 pr-0 rounded-lg font-normal text-left hover:bg-transparent disabled:opacity-100 disabled:cursor-default"
                       onClick={() => navigate(item)}
                       disabled={!openable}
                     >

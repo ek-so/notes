@@ -16,7 +16,7 @@ export default function ItemMenu({ item, onRename, onDelete }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="More actions" className="shrink-0 text-muted-foreground">
+          <Button variant="ghost" size="icon" aria-label="More actions" className="shrink-0 text-muted-foreground hover:bg-transparent hover:text-foreground">
             <DotsThree weight="fill" />
           </Button>
         </DropdownMenuTrigger>
