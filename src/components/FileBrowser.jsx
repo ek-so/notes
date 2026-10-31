@@ -67,10 +67,10 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
               const openable = item.type === 'dir' || ext === '.md'
               return (
                 <li key={item.path}>
-                  <div className="flex items-center pr-2 rounded-lg transition-colors hover:bg-secondary">
+                  <div className="flex items-center pr-1 rounded-lg">
                     <Button
                       variant="ghost"
-                      className="flex-1 min-w-0 justify-start gap-3 pl-3 pr-0 rounded-lg font-normal text-left hover:bg-transparent disabled:opacity-100 disabled:cursor-default"
+                      className="flex-1 min-w-0 justify-start gap-3 pl-3 pr-0 rounded-lg font-normal text-left hover:bg-secondary disabled:opacity-100 disabled:cursor-default"
                       onClick={() => navigate(item)}
                       disabled={!openable}
                     >
