@@ -9,10 +9,11 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     react(),
     // Service worker caches the app itself so it opens offline. Notes are
-    // cached separately in IndexedDB (src/lib/cache.js).
+    // cached separately in IndexedDB (src/lib/cache.js). Updates are applied
+    // by src/lib/updates.js, which waits until you're not typing.
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'script',
+      registerType: 'prompt',
+      injectRegister: false,
       manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,json}'],
