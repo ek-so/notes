@@ -17,7 +17,7 @@ async function downloadNotes(files) {
   for (const sha of shas) if (!(await cache.hasBlob(sha))) queue.push(sha)
   const worker = async () => {
     while (queue.length) {
-      try { await getBlobBase64(queue.pop()) } catch { return }
+      try { await getBlobBase64(queue.pop()) } catch { /* network hiccup — try next */ }
     }
   }
   await Promise.all(Array.from({ length: PREFETCH_WORKERS }, worker))

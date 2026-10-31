@@ -34,8 +34,6 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
   }
 
   const fileName = displayName(path)
-  const mdTitle = content ? /^# (.+)/m.exec(content)?.[1]?.trim() : null
-  const displayTitle = mdTitle || fileName
   const ready = !loading && !loadError
 
   return (
@@ -43,7 +41,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
       <Header
         start={
           <div className="flex-1 min-w-0">
-            <PathBreadcrumbs root={root} path={path} current={displayTitle} changed={ready && edited !== undefined} onNavigate={onNavigate} />
+            <PathBreadcrumbs root={root} path={path} current={fileName} changed={ready && edited !== undefined} onNavigate={onNavigate} />
           </div>
         }
       >

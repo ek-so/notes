@@ -125,7 +125,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                         {item.changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
                       </span>
                     </Button>
-                    <ItemMenu item={item} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
+                    <ItemMenu item={item} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} inList />
                   </div>
                 </li>
               )

@@ -32,7 +32,7 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
                   <button onClick={() => onNavigate(crumb.path)}>
                     <span className="flex items-center gap-1 max-w-40">
                       {i === 0 && <House className="size-4 shrink-0" />}
-                      <span className="truncate">{crumb.name}</span>
+                      <span className={`truncate${i === 0 ? ' font-semibold text-foreground' : ''}`}>{crumb.name}</span>
                     </span>
                   </button>
                 </BreadcrumbLink>

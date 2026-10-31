@@ -9,7 +9,9 @@ import MoveModal from './MoveModal.jsx'
 // ⋯ menu with Rename / Move / Delete for a file or folder ({ name, path, type }).
 // onRename(item, name) returns an error message or null.
 // onMove(item, targetFolder) returns an error message or null.
-export default function ItemMenu({ item, onRename, onDelete, onMove, folders }) {
+// inList: in a file-browser row — ghost (no border), smaller icon, blends with row hover
+// default (header context): ghost-outline with a more visible border
+export default function ItemMenu({ item, onRename, onDelete, onMove, folders, inList }) {
   const [renaming, setRenaming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [moving, setMoving] = useState(false)
@@ -18,8 +20,13 @@ export default function ItemMenu({ item, onRename, onDelete, onMove, folders }) 
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost-outline" size="icon" aria-label="More actions" className="shrink-0">
-            <DotsThree weight="bold" size={20} />
+          <Button
+            variant={inList ? 'ghost' : 'ghost-outline'}
+            size="icon"
+            aria-label="More actions"
+            className={inList ? 'shrink-0 text-muted-foreground' : 'shrink-0 border-2'}
+          >
+            <DotsThree weight="bold" size={inList ? 16 : 20} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>

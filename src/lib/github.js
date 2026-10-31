@@ -51,7 +51,7 @@ async function getDefaultBranch() {
 // Latest commit SHA on the default branch — cheap single request, no tree.
 export async function getLatestCommitSha() {
   const branchName = await getDefaultBranch()
-  const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch: branchName })
+  const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch: branchName, headers: { 'Cache-Control': 'no-cache' } })
   return data.commit.sha
 }
 
@@ -59,7 +59,9 @@ export async function getLatestCommitSha() {
 // `truncated` is set when GitHub couldn't list the whole tree.
 export async function getTree() {
   const branchName = await getDefaultBranch()
-  const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch: branchName })
+  // no-cache: GitHub's API sets max-age=60; without this, syncing within 60s of a remote
+  // edit returns the browser-cached (stale) branch/tree and shows the old file content.
+  const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch: branchName, headers: { 'Cache-Control': 'no-cache' } })
   const treeSha = data.commit.commit.tree.sha
   const { data: tree } = await octokit.rest.git.getTree({ owner, repo, tree_sha: treeSha, recursive: 'true' })
   const files = {}
