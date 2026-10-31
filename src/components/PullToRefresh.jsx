@@ -18,7 +18,9 @@ export default function PullToRefresh({ onRefresh, children }) {
   const rootRef = useRef()
 
   function onTouchStart(e) {
-    const blocked = refreshing || scrolledAncestor(e.target, rootRef.current)
+    // Not while typing: dragging then only hides the keyboard
+    const typing = document.activeElement?.matches('textarea, input')
+    const blocked = refreshing || typing || scrolledAncestor(e.target, rootRef.current)
     pullStart.current = blocked ? null : e.touches[0].clientY
   }
 
