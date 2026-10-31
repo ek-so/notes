@@ -39,7 +39,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
       <Header
         title={currentFolder}
         onMenu={onMenu}
-        onHome={() => onNavigate('')}
         onBack={path ? goBack : undefined}
       >
         <DropdownMenu>
