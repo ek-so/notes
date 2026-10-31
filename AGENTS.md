@@ -47,6 +47,7 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 | `text-muted-foreground` | Secondary / muted text |
 | `bg-primary` / `text-primary` | Accent blue |
 | `bg-destructive` | Errors / danger (`#e05252`) |
+| `bg-segment` / `bg-segment-active` | Segmented toggle track / selected segment (lighter in both themes) |
 | `--radius` | `0.75rem` base radius |
 
 `--safe-top` / `--safe-bottom` hold the iOS safe-area insets. `src/App.css` only styles the generated markdown preview HTML, using the tokens above.

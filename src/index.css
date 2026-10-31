@@ -28,6 +28,10 @@
     --secondary-foreground: oklch(0.1 0 0);
 
     --muted: oklch(0.93 0 0);
+
+    /* Segmented toggles: track and the (lighter) selected segment */
+    --segment: oklch(0.93 0 0);
+    --segment-active: oklch(1 0 0);
     --muted-foreground: oklch(0.5 0 0);
 
     --accent: oklch(0.62 0.13 240);
@@ -65,6 +69,10 @@
       --secondary-foreground: oklch(0.93 0 0);
 
       --muted: oklch(0.18 0 0);
+    --segment: oklch(0.07 0 0);
+    --segment-active: oklch(0.24 0 0);
+      --segment: oklch(0.07 0 0);
+      --segment-active: oklch(0.24 0 0);
       --muted-foreground: oklch(0.6 0 0);
 
       --accent: oklch(0.55 0.13 240);
@@ -123,6 +131,8 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
+  --color-segment: var(--segment);
+  --color-segment-active: var(--segment-active);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
