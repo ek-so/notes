@@ -3,7 +3,10 @@
 
 @layer base {
   html, body, #root {
+    /* Full screen height: on iOS home-screen apps 100% can leave out the
+       status bar, which pushes everything up and leaves a gap at the bottom */
     height: 100%;
+    height: 100dvh;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     background-color: var(--background);
