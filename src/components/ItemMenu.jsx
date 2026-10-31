@@ -24,7 +24,7 @@ export default function ItemMenu({ item, onRename, onDelete, onMove, folders, in
             variant={inList ? 'ghost' : 'ghost-outline'}
             size="icon"
             aria-label="More actions"
-            className={inList ? 'shrink-0 text-muted-foreground' : 'shrink-0 border-2'}
+            className={inList ? 'shrink-0 text-muted-foreground' : 'shrink-0 border-muted-foreground/50'}
           >
             <DotsThree weight="bold" size={inList ? 16 : 20} />
           </Button>

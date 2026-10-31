@@ -48,7 +48,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
         <ItemMenu item={{ name: path.split('/').pop(), path, type: 'file' }} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
         {mode === 'edit' && (
           // For desktop, where there's no keyboard Done
-          <Button variant="ghost" size="icon" onClick={finishEditing} aria-label="Done" className="shrink-0">
+          <Button variant="ghost" size="icon" onClick={finishEditing} aria-label="Done" className="shrink-0 text-primary">
             <Check />
           </Button>
         )}
