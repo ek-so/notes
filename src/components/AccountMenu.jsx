@@ -38,7 +38,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
           ))}
         </div>
         <DropdownMenuItem onSelect={onSettings}><Gear /> Settings</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onSignOut}><SignOut /> Sign out</DropdownMenuItem>
+        <DropdownMenuItem variant="destructive" onSelect={onSignOut}><SignOut /> Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
