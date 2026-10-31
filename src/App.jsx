@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { CloudSlash } from '@phosphor-icons/react'
 import Auth from './components/Auth.jsx'
 import RepoSetup from './components/RepoSetup.jsx'
 import FileBrowser from './components/FileBrowser.jsx'
@@ -20,7 +19,6 @@ import { cache } from './lib/cache.js'
 import {
   listDir, nameError, renameTarget, renameError, createError, add, setEdit, rename, remove, getAllFolders,
 } from './lib/changes.js'
-import { cn } from '@/lib/utils.js'
 
 export default function App() {
   const auth = useAuth()
@@ -143,6 +141,7 @@ export default function App() {
             onDelete={handleDelete}
             onMove={handleMove}
             folders={allFolders}
+            syncButton={<SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} remoteAhead={repo.remoteAhead} onSync={repo.sync} />}
           />
         ) : (
           <FileBrowser
@@ -168,19 +167,10 @@ export default function App() {
             onSelect={setSelectedFile}
             onNewFile={(f, kind) => setNewFile({ folder: f, kind })}
             repoName={repoName}
+            syncButton={<SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} remoteAhead={repo.remoteAhead} onSync={repo.sync} />}
           />
         )}
       </PullToRefresh>
-
-      <div
-        className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border bg-background shrink-0"
-        style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
-      >
-        <span className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', repo.online && 'invisible')}>
-          <CloudSlash className="size-4" /> Offline
-        </span>
-        <SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} remoteAhead={repo.remoteAhead} onSync={repo.sync} />
-      </div>
 
       {confirmSignOut && (
         <SignOutModal changeCount={repo.changeCount} onSignOut={signOut} onClose={() => setConfirmSignOut(false)} />

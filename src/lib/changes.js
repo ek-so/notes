@@ -77,7 +77,7 @@ export function listDir(virtual, dir, changed = new Set()) {
     const rest = path.slice(prefix.length)
     const slash = rest.indexOf('/')
     if (slash === -1) {
-      items.push({ name: rest, path, type: 'file', changed: changed.has(path) })
+      items.push({ name: rest, path, type: 'file', changed: changed.has(path), sha: virtual[path]?.sha })
     } else {
       const name = rest.slice(0, slash)
       dirs.set(name, { name, path: prefix + name, type: 'dir', changed: changed.has(prefix + name) })

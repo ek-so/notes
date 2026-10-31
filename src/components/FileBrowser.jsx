@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, FileText, Folder } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
@@ -7,11 +7,47 @@ import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 import ItemMenu from './ItemMenu.jsx'
 import { splitName } from '../lib/changes.js'
 import { isImage } from '../lib/files.js'
+import { cache } from '../lib/cache.js'
+
+// Returns the leading emoji from a markdown file's first H1, or null.
+function extractLeadingEmoji(text) {
+  const m = /^# /m.exec(text)
+  if (!m) return null
+  const after = text.slice(m.index + 2)
+  const first = [...after][0]
+  if (!first) return null
+  return first.codePointAt(0) > 0x2500 ? first : null
+}
+
+function useFileEmojis(items) {
+  const [emojis, setEmojis] = useState({})
+  const shaKey = items.map(i => i.type === 'file' ? (i.sha ?? '') : '').join('|')
+  useEffect(() => {
+    let cancelled = false
+    const mdItems = items.filter(i => i.type === 'file' && i.path.endsWith('.md') && i.sha)
+    if (!mdItems.length) return
+    ;(async () => {
+      const updates = {}
+      for (const item of mdItems) {
+        const b64 = await cache.getBlob(item.sha)
+        if (cancelled || b64 === undefined) continue
+        try {
+          const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+          updates[item.path] = extractLeadingEmoji(new TextDecoder().decode(bytes))
+        } catch { /* skip */ }
+      }
+      if (!cancelled) setEmojis(updates)
+    })()
+    return () => { cancelled = true }
+  }, [shaKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  return emojis
+}
 import Spinner from './Spinner.jsx'
 import { cn } from '@/lib/utils.js'
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu, syncButton }) {
   const items = loading ? [] : listDir(path)
+  const emojis = useFileEmojis(items)
   const draggingRef = useRef(null) // always current for event handlers
   const [dragging, setDragging] = useState(null) // for rendering only
   const [dragOverPath, setDragOverPath] = useState(null)
@@ -48,10 +84,11 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
             <DropdownMenuItem onSelect={() => onNewFile(path, 'folder')}><Folder /> New folder</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {syncButton}
       </Header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="max-w-[680px] mx-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'var(--safe-bottom)' }}>
+        <div className="max-w-[1000px] mx-auto">
         {loading && (
           <div className="flex justify-center py-12">
             <Spinner />
@@ -118,7 +155,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                     >
                       {item.type === 'dir'
                         ? <img src={`${import.meta.env.BASE_URL}folio-logo.png`} alt="" className="size-6 shrink-0 object-contain" />
-                        : <span className="text-lg shrink-0">{isImage(item.name) ? '🖼️' : '📄'}</span>}
+                        : <span className="text-lg shrink-0">{isImage(item.name) ? '🖼️' : (emojis[item.path] ?? '📄')}</span>}
                       <span className="flex-1 text-base truncate">
                         {base}
                         {ext && <span className="text-muted-foreground">{ext}</span>}

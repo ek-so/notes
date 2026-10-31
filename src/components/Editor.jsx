@@ -13,7 +13,7 @@ import { displayName } from '../lib/files.js'
 
 // A note: shown as preview; tapping text edits its markdown there. Edits
 // save on their own; ✓ / Done only switches back to preview.
-export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onOpenFile, onRename, onDelete, onMove, folders }) {
+export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onOpenFile, onRename, onDelete, onMove, folders, syncButton }) {
   const { content, change, loading, loadError } = useNote(entry, edited, onEdit)
   const [mode, setMode] = useState('preview')
   const [editedAt, setEditedAt] = useState(null) // offset to show when back in preview
@@ -52,8 +52,9 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
             <Check />
           </Button>
         )}
+        {syncButton}
       </Header>
-      <div className="flex flex-col flex-1 min-h-0 max-w-[680px] mx-auto w-full">
+      <div className="flex flex-col flex-1 min-h-0 max-w-[1000px] mx-auto w-full">
         {loading || loadError ? (
           loading ? (
             <div className="flex justify-center py-12"><Spinner /></div>
