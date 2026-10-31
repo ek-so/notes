@@ -3,10 +3,10 @@ import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
 } from './ui/breadcrumb.jsx'
 
-// Home › folder › … › current, at the top of inner screens' scrolling
-// content. Every level but the last is a link to that folder ('' = home).
-// Lines are 24px apart; links keep a 44px tap area (see ui/breadcrumb).
-export default function PathBreadcrumbs({ root, path, current, onNavigate }) {
+// Breadcrumbs in the fixed header. Every level but the last is a link.
+// `current` overrides the last crumb's name (used in Editor for the display name).
+// `changed` shows an unsaved-changes dot on the last crumb.
+export default function PathBreadcrumbs({ root, path, current, changed, onNavigate }) {
   const parts = path.split('/').filter(Boolean)
   const crumbs = [
     { name: root, path: '' },
@@ -15,14 +15,17 @@ export default function PathBreadcrumbs({ root, path, current, onNavigate }) {
   if (current) crumbs[crumbs.length - 1].name = current
 
   return (
-    <Breadcrumb className="px-4 py-2.5">
-      <BreadcrumbList>
+    <Breadcrumb>
+      <BreadcrumbList className="flex-nowrap">
         {crumbs.map((crumb, i) => (
           <Fragment key={crumb.path}>
             {i > 0 && <BreadcrumbSeparator />}
             <BreadcrumbItem>
               {i === crumbs.length - 1 ? (
-                <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
+                <BreadcrumbPage>
+                  {crumb.name}
+                  {changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
+                </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
                   <button onClick={() => onNavigate(crumb.path)}>

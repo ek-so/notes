@@ -13,7 +13,7 @@ import { displayName } from '../lib/files.js'
 
 // A note: shown as preview; tapping text edits its markdown there. Edits
 // save on their own; ✓ / Done only switches back to preview.
-export default function Editor({ path, root, entry, files, edited, onEdit, onClose, onNavigate, onRename, onDelete }) {
+export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onRename, onDelete, onMove, folders }) {
   const { content, change, loading, loadError } = useNote(entry, edited, onEdit)
   const [mode, setMode] = useState('preview')
   const [editedAt, setEditedAt] = useState(null) // offset to show when back in preview
@@ -34,13 +34,18 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
   }
 
   const fileName = displayName(path)
-  const breadcrumbs = <PathBreadcrumbs root={root} path={path} current={fileName} onNavigate={onNavigate} />
   const ready = !loading && !loadError
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <Header title={fileName} changed={ready && edited !== undefined} onBack={onClose}>
-        <ItemMenu item={{ name: path.split('/').pop(), path, type: 'file' }} onRename={onRename} onDelete={onDelete} />
+      <Header
+        start={
+          <div className="flex-1 min-w-0">
+            <PathBreadcrumbs root={root} path={path} current={fileName} changed={ready && edited !== undefined} onNavigate={onNavigate} />
+          </div>
+        }
+      >
+        <ItemMenu item={{ name: path.split('/').pop(), path, type: 'file' }} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
         {mode === 'edit' && (
           // For desktop, where there's no keyboard Done
           <Button variant="ghost" size="icon" onClick={finishEditing} aria-label="Done" className="shrink-0">
@@ -50,23 +55,17 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
       </Header>
       <div className="flex flex-col flex-1 min-h-0 max-w-[680px] mx-auto w-full">
         {loading || loadError ? (
-          <>
-            {breadcrumbs}
-            {loading ? (
-              <div className="flex justify-center py-12"><Spinner /></div>
-            ) : (
-              <p className="text-muted-foreground text-sm text-center py-12 px-6">
-                Couldn't open this note. It isn't saved on this device yet — connect to the internet and pull to refresh.
-              </p>
-            )}
-          </>
+          loading ? (
+            <div className="flex justify-center py-12"><Spinner /></div>
+          ) : (
+            <p className="text-muted-foreground text-sm text-center py-12 px-6">
+              Couldn't open this note. It isn't saved on this device yet — connect to the internet and pull to refresh.
+            </p>
+          )
         ) : mode === 'edit' ? (
-          // The textarea scrolls on its own, so breadcrumbs can't scroll with it
           <MarkdownEditor ref={textareaRef} content={content} onChange={change} onDone={finishEditing} />
         ) : (
-          <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing}>
-            {breadcrumbs}
-          </MarkdownPreview>
+          <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing} />
         )}
       </div>
     </div>

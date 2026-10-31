@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Plus, FileText, Folder } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
@@ -7,17 +8,16 @@ import ItemMenu from './ItemMenu.jsx'
 import { splitName } from '../lib/changes.js'
 import { isImage } from '../lib/files.js'
 import Spinner from './Spinner.jsx'
+import { cn } from '@/lib/utils.js'
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, menu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu }) {
   const items = loading ? [] : listDir(path)
+  const [dragging, setDragging] = useState(null)
+  const [dragOverPath, setDragOverPath] = useState(null)
 
   function navigate(item) {
     if (item.type === 'dir') onNavigate(item.path)
     else onSelect(item.path)
-  }
-
-  function goBack() {
-    onNavigate(path.slice(0, Math.max(path.lastIndexOf('/'), 0)))
   }
 
   const currentFolder = path ? path.split('/').pop() : repoName
@@ -25,12 +25,16 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <Header
-        title={currentFolder}
-        start={menu}
-        onBack={path ? goBack : undefined}
+        start={
+          path ? (
+            <div className="flex-1 min-w-0">
+              <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} />
+            </div>
+          ) : menu
+        }
       >
         {path && (
-          <ItemMenu item={{ name: currentFolder, path, type: 'dir' }} onRename={onRename} onDelete={onDelete} />
+          <ItemMenu item={{ name: currentFolder, path, type: 'dir' }} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -45,11 +49,8 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         </DropdownMenu>
       </Header>
 
-      {/* Breadcrumbs scroll away with the list */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="max-w-[680px] mx-auto">
-        {path && <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} />}
-
         {loading && (
           <div className="flex justify-center py-12">
             <Spinner />
@@ -65,9 +66,42 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
             {items.map(item => {
               const [base, ext] = item.type === 'dir' ? [item.name, ''] : splitName(item.name)
               const openable = item.type === 'dir' || ext === '.md'
+              const isDropTarget = item.type === 'dir' && dragging && dragging.path !== item.path
+              const isDraggedItem = dragging?.path === item.path
               return (
-                <li key={item.path}>
-                  <div className="flex items-center pr-1 rounded-lg">
+                <li
+                  key={item.path}
+                  draggable
+                  onDragStart={e => {
+                    setDragging(item)
+                    e.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onDragEnd={() => { setDragging(null); setDragOverPath(null) }}
+                  className={isDraggedItem ? 'opacity-40' : ''}
+                >
+                  <div
+                    className={cn(
+                      'flex items-center pr-1 rounded-lg transition-colors',
+                      dragOverPath === item.path && isDropTarget && 'bg-primary/10 ring-1 ring-primary/40'
+                    )}
+                    onDragOver={e => {
+                      if (!isDropTarget) return
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      setDragOverPath(item.path)
+                    }}
+                    onDragLeave={e => {
+                      if (item.type !== 'dir') return
+                      if (!e.currentTarget.contains(e.relatedTarget)) setDragOverPath(null)
+                    }}
+                    onDrop={e => {
+                      if (!isDropTarget) return
+                      e.preventDefault()
+                      onMove?.(dragging, item.path)
+                      setDragging(null)
+                      setDragOverPath(null)
+                    }}
+                  >
                     <Button
                       variant="ghost"
                       className="flex-1 min-w-0 justify-start gap-3 pl-3 pr-0 rounded-lg font-normal text-left hover:bg-secondary disabled:opacity-100 disabled:cursor-default"
@@ -83,7 +117,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                         {item.changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
                       </span>
                     </Button>
-                    <ItemMenu item={item} onRename={onRename} onDelete={onDelete} />
+                    <ItemMenu item={item} onRename={onRename} onDelete={onDelete} onMove={onMove} folders={folders} />
                   </div>
                 </li>
               )

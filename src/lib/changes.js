@@ -256,6 +256,20 @@ export function treeEntries(ch, files) {
 }
 
 
+export function getAllFolders(virtual) {
+  const folders = new Set()
+  for (const path of Object.keys(virtual)) {
+    let p = path
+    while (true) {
+      const slash = p.lastIndexOf('/')
+      if (slash <= 0) break
+      p = p.slice(0, slash)
+      folders.add(p)
+    }
+  }
+  return [...folders].sort()
+}
+
 export function commitMessage(ch) {
   const lines = Object.keys(ch.base).map(orig => {
     const target = targetOf(ch, orig)

@@ -48,6 +48,13 @@ async function getDefaultBranch() {
   return branch
 }
 
+// Latest commit SHA on the default branch — cheap single request, no tree.
+export async function getLatestCommitSha() {
+  const branchName = await getDefaultBranch()
+  const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch: branchName })
+  return data.commit.sha
+}
+
 // Latest commit on the default branch with every file in its tree.
 // `truncated` is set when GitHub couldn't list the whole tree.
 export async function getTree() {

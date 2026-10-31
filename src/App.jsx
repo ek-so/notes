@@ -18,7 +18,7 @@ import { useTheme } from './hooks/useTheme.js'
 import { storage } from './lib/storage.js'
 import { cache } from './lib/cache.js'
 import {
-  listDir, nameError, renameTarget, renameError, createError, add, setEdit, rename, remove,
+  listDir, nameError, renameTarget, renameError, createError, add, setEdit, rename, remove, getAllFolders,
 } from './lib/changes.js'
 import { cn } from '@/lib/utils.js'
 
@@ -45,6 +45,18 @@ export default function App() {
     update(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
     // Stay in the renamed folder / note
     const follow = p => p && (p === item.path || p.startsWith(item.path + '/')) ? to + p.slice(item.path.length) : p
+    setFolder(follow)
+    setSelectedFile(follow)
+    return null
+  }
+
+  function handleMove(item, targetFolder) {
+    const to = targetFolder ? `${targetFolder}/${item.name}` : item.name
+    const error = renameError(changes, virtual, item, to)
+    if (error) return error
+    update(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
+    const follow = p => p && (p === item.path || p.startsWith(item.path + '/'))
+      ? to + p.slice(item.path.length) : p
     setFolder(follow)
     setSelectedFile(follow)
     return null
@@ -101,6 +113,7 @@ export default function App() {
 
   const entry = selectedFile && virtual[selectedFile]
   const repoName = auth.repo.split('/')[1]
+  const allFolders = getAllFolders(virtual)
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -116,11 +129,12 @@ export default function App() {
             edited={changes.edits[entry.orig]}
             onEdit={(content, original) =>
               update(ch => setEdit(ch, virtual[selectedFile], content, original))}
-            onClose={() => setSelectedFile(null)}
             root={repoName}
             onNavigate={p => { setFolder(p); setSelectedFile(null) }}
             onRename={handleRename}
             onDelete={handleDelete}
+            onMove={handleMove}
+            folders={allFolders}
           />
         ) : (
           <FileBrowser
@@ -132,6 +146,8 @@ export default function App() {
             notice={repo.remote?.truncated ? 'This repo is too large to list in full; some files are missing.' : ''}
             onRename={handleRename}
             onDelete={handleDelete}
+            onMove={handleMove}
+            folders={allFolders}
             menu={
               <AccountMenu
                 repo={auth.repo}
@@ -155,7 +171,7 @@ export default function App() {
         <span className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', repo.online && 'invisible')}>
           <CloudSlash className="size-4" /> Offline
         </span>
-        <SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} onSync={repo.sync} />
+        <SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} remoteAhead={repo.remoteAhead} onSync={repo.sync} />
       </div>
 
       {confirmSignOut && (
