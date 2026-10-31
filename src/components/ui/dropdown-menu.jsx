@@ -41,3 +41,25 @@ function DropdownMenuItem({ className, variant = 'default', ...props }) {
 }
 
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem }
+
+function DropdownMenuLabel({ className, ...props }) {
+  return (
+    <DropdownMenuPrimitive.Label
+      data-slot="dropdown-menu-label"
+      className={cn('px-3 py-2 font-semibold', className)}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSeparator({ className, ...props }) {
+  return (
+    <DropdownMenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn('bg-border -mx-1 my-1 h-px', className)}
+      {...props}
+    />
+  )
+}
+
+export { DropdownMenuLabel, DropdownMenuSeparator }

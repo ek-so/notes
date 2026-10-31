@@ -10,7 +10,7 @@ import { splitName } from '../lib/changes.js'
 import { isImage } from '../lib/files.js'
 import Spinner from './Spinner.jsx'
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repo, onRename, onDelete, onMenu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repo, onRename, onDelete, menu }) {
   const [renameItem, setRenameItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
   const items = loading ? [] : listDir(path)
@@ -31,7 +31,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
     <div className="flex flex-col flex-1 min-h-0">
       <Header
         title={currentFolder}
-        onMenu={onMenu}
+        start={menu}
         onBack={path ? goBack : undefined}
       >
         <DropdownMenu>

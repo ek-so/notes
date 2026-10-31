@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ArrowsClockwise, Check, X, Sun, Moon, CloudSlash } from '@phosphor-icons/react'
+import { ArrowsClockwise, Check, X, CloudSlash } from '@phosphor-icons/react'
 import Auth from './components/Auth.jsx'
 import RepoSetup from './components/RepoSetup.jsx'
 import FileBrowser from './components/FileBrowser.jsx'
@@ -8,9 +8,10 @@ import PullToRefresh from './components/PullToRefresh.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import BottomSheet from './components/BottomSheet.jsx'
+import AccountMenu from './components/AccountMenu.jsx'
+import Settings from './components/Settings.jsx'
 import Spinner from './components/Spinner.jsx'
 import { Button } from './components/ui/button.jsx'
-import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './components/ui/sheet.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import { useRepo } from './hooks/useRepo.js'
 import { useTheme } from './hooks/useTheme.js'
@@ -22,11 +23,11 @@ import { cn } from '@/lib/utils.js'
 export default function App() {
   const auth = useAuth()
   const repo = useRepo(auth.user ? auth.repo : null)
-  const { theme, toggleTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [selectedFile, setSelectedFile] = useState(storage.getFile)
   const [folder, setFolder] = useState(storage.getFolder)
   const [newFile, setNewFile] = useState(null) // { folder, kind } while the sheet is open
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
 
   useEffect(() => { storage.setFolder(folder) }, [folder])
@@ -88,7 +89,7 @@ export default function App() {
 
   async function signOut() {
     setConfirmSignOut(false)
-    setMenuOpen(false)
+    setShowSettings(false)
     repo.discardAll()
     await cache.clearAll()
     auth.signOut()
@@ -113,7 +114,9 @@ export default function App() {
   return (
     <div className="flex flex-col h-full max-w-[680px] mx-auto bg-background">
       <PullToRefresh onRefresh={() => window.location.reload()}>
-        {entry ? (
+        {showSettings ? (
+          <Settings login={auth.user.login} repo={auth.repo} onBack={() => setShowSettings(false)} />
+        ) : entry ? (
           <Editor
             key={selectedFile}
             path={selectedFile}
@@ -136,7 +139,16 @@ export default function App() {
             notice={repo.remote?.truncated ? 'This repo is too large to list in full; some files are missing.' : ''}
             onRename={handleRename}
             onDelete={handleDelete}
-            onMenu={() => setMenuOpen(true)}
+            menu={
+              <AccountMenu
+                login={auth.user.login}
+                repo={auth.repo}
+                theme={theme}
+                onTheme={setTheme}
+                onSettings={() => setShowSettings(true)}
+                onSignOut={() => repo.changeCount ? setConfirmSignOut(true) : signOut()}
+              />
+            }
             onSelect={setSelectedFile}
             onNewFile={(f, kind) => setNewFile({ folder: f, kind })}
             repo={auth.repo}
@@ -169,26 +181,6 @@ export default function App() {
           )}
         </Button>
       </div>
-
-      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side="left" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
-          <SheetHeader>
-            <SheetTitle>@{auth.user.login}</SheetTitle>
-            <SheetDescription>{auth.repo}</SheetDescription>
-          </SheetHeader>
-          <div className="px-2">
-            <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-3 px-2">
-              {theme === 'dark' ? <><Sun /> Light theme</> : <><Moon /> Dark theme</>}
-            </Button>
-          </div>
-          <SheetFooter>
-            <Button
-              variant="outline"
-              onClick={() => repo.changeCount ? setConfirmSignOut(true) : signOut()}
-            >Sign out</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       {confirmSignOut && (
         <BottomSheet
