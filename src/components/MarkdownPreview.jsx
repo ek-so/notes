@@ -72,6 +72,18 @@ export default function MarkdownPreview({ content, path, files, scrollTo, onTap,
       }
     }
     breakLongWords(tpl.content)
+    // Wrap leading emoji in H1 headings with an outlined icon badge
+    for (const h1 of tpl.content.querySelectorAll('h1')) {
+      const first = h1.firstChild
+      if (!first || first.nodeType !== Node.TEXT_NODE) continue
+      const chars = [...first.textContent]
+      if (!chars.length || chars[0].codePointAt(0) <= 0x2500) continue
+      const span = document.createElement('span')
+      span.className = 'emoji-icon'
+      span.textContent = chars[0]
+      first.textContent = chars.slice(1).join('').trimStart()
+      h1.insertBefore(span, first)
+    }
     const imgs = [...tpl.content.querySelectorAll('img')]
       .map(img => [img, resolveImage(path, img.getAttribute('src'))])
       .filter(([, repoPath]) => repoPath !== null)

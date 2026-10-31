@@ -45,7 +45,7 @@ function useFileEmojis(items) {
 import Spinner from './Spinner.jsx'
 import { cn } from '@/lib/utils.js'
 
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu, syncButton }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu, syncButton, onSearch }) {
   const items = loading ? [] : listDir(path)
   const emojis = useFileEmojis(items)
   const draggingRef = useRef(null) // always current for event handlers
@@ -65,7 +65,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         start={
           path ? (
             <div className="flex-1 min-w-0">
-              <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} />
+              <PathBreadcrumbs root={repoName} path={path} onNavigate={onNavigate} onSearch={onSearch} />
             </div>
           ) : menu
         }

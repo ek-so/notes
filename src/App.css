@@ -1,5 +1,6 @@
 /* Markdown preview: styles for generated HTML, which can't carry Tailwind classes */
-.editor-preview h1 { font-size: 24px; font-weight: 700; margin: 0 0 16px; letter-spacing: -0.3px; }
+.editor-preview h1 { font-size: 24px; font-weight: 700; margin: 0 0 16px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.editor-preview .emoji-icon { display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--border); border-radius: 10px; padding: 2px 8px; line-height: 1; font-size: 0.9em; flex-shrink: 0; }
 .editor-preview h2 { font-size: 20px; font-weight: 600; margin: 24px 0 12px; }
 .editor-preview h3 { font-size: 17px; font-weight: 600; margin: 20px 0 10px; }
 .editor-preview p { margin: 0 0 14px; }

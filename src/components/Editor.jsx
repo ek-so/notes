@@ -13,7 +13,7 @@ import { displayName } from '../lib/files.js'
 
 // A note: shown as preview; tapping text edits its markdown there. Edits
 // save on their own; ✓ / Done only switches back to preview.
-export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onOpenFile, onRename, onDelete, onMove, folders, syncButton }) {
+export default function Editor({ path, root, entry, files, edited, onEdit, onNavigate, onOpenFile, onRename, onDelete, onMove, folders, syncButton, onSearch }) {
   const { content, change, loading, loadError } = useNote(entry, edited, onEdit)
   const [mode, setMode] = useState('preview')
   const [editedAt, setEditedAt] = useState(null) // offset to show when back in preview
@@ -41,7 +41,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
       <Header
         start={
           <div className="flex-1 min-w-0">
-            <PathBreadcrumbs root={root} path={path} current={fileName} changed={ready && edited !== undefined} onNavigate={onNavigate} />
+            <PathBreadcrumbs root={root} path={path} current={fileName} changed={ready && edited !== undefined} onNavigate={onNavigate} onSearch={onSearch} />
           </div>
         }
       >

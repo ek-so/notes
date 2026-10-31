@@ -7,6 +7,7 @@ import PullToRefresh from './components/PullToRefresh.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import SyncButton from './components/SyncButton.jsx'
+import SearchSheet from './components/SearchSheet.jsx'
 import SignOutModal from './components/SignOutModal.jsx'
 import AccountMenu from './components/AccountMenu.jsx'
 import Settings from './components/Settings.jsx'
@@ -24,11 +25,16 @@ export default function App() {
   const auth = useAuth()
   const repo = useRepo(auth.user ? auth.repo : null)
   const { theme, setTheme } = useTheme()
-  const [selectedFile, setSelectedFile] = useState(storage.getFile)
+  const [selectedFile, setSelectedFileState] = useState(storage.getFile)
+  function setSelectedFile(path) {
+    if (path) storage.addRecentFile(path)
+    setSelectedFileState(path)
+  }
   const [folder, setFolder] = useState(storage.getFolder)
   const [newFile, setNewFile] = useState(null) // { folder, kind } while the sheet is open
   const [showSettings, setShowSettings] = useState(storage.getSettingsOpen)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => { storage.setFolder(folder) }, [folder])
   useEffect(() => { storage.setFile(selectedFile) }, [selectedFile])
@@ -142,6 +148,7 @@ export default function App() {
             onMove={handleMove}
             folders={allFolders}
             syncButton={<SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} remoteAhead={repo.remoteAhead} onSync={repo.sync} />}
+            onSearch={() => setSearchOpen(true)}
           />
         ) : (
           <FileBrowser
@@ -162,12 +169,14 @@ export default function App() {
                 onTheme={setTheme}
                 onSettings={() => setShowSettings(true)}
                 onSignOut={() => repo.changeCount ? setConfirmSignOut(true) : signOut()}
+                onSearch={() => setSearchOpen(true)}
               />
             }
             onSelect={setSelectedFile}
             onNewFile={(f, kind) => setNewFile({ folder: f, kind })}
             repoName={repoName}
             syncButton={<SyncButton syncState={repo.syncState} syncing={repo.syncing} changeCount={repo.changeCount} remoteAhead={repo.remoteAhead} onSync={repo.sync} />}
+            onSearch={() => setSearchOpen(true)}
           />
         )}
       </PullToRefresh>
@@ -194,6 +203,15 @@ export default function App() {
           onClose={repo.dismissConflicts}
         />
       )}
+
+      <SearchSheet
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={path => { setSelectedFile(path); setFolder('') }}
+        virtual={virtual}
+        changes={changes}
+        recent={storage.getRecentFiles()}
+      />
     </div>
   )
 }

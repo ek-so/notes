@@ -1,3 +1,4 @@
+const RECENT_KEY = 'folio_recent'
 const TOKEN_KEY = 'brain_gh_token'
 const REPO_KEY = 'brain_gh_repo'
 const USER_KEY = 'folio_user'
@@ -37,6 +38,16 @@ export const storage = {
   setFile: (path) => write(sessionStorage, FILE_KEY, path),
   getSettingsOpen: () => read(sessionStorage, SETTINGS_KEY) === '1',
   setSettingsOpen: (open) => write(sessionStorage, SETTINGS_KEY, open ? '1' : null),
+  getRecentFiles: () => {
+    try { return JSON.parse(read(sessionStorage, RECENT_KEY)) || [] } catch { return [] }
+  },
+  addRecentFile: (path) => {
+    try {
+      const prev = JSON.parse(read(sessionStorage, RECENT_KEY)) || []
+      const next = [path, ...prev.filter(p => p !== path)].slice(0, 15)
+      write(sessionStorage, RECENT_KEY, JSON.stringify(next))
+    } catch {}
+  },
   // Everything tied to the signed-in account; theme stays
   clearSession: () => {
     for (const key of [TOKEN_KEY, REPO_KEY, USER_KEY]) write(localStorage, key, null)
