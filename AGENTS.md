@@ -52,6 +52,7 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 
 - `src/lib/github.js` — all GitHub API calls. `init(token)` sets up Octokit; `setRepo(owner, repo)` sets target repo. Blob reads go through the offline cache.
 - `src/lib/changes.js` — pure model of local changes (edits, renames, deletes, new files) layered over the remote tree. Covered by `changes.test.js` (`npm test`).
+- `src/lib/markdown.js` — preview rendering (blocks tagged with their source range), tap-to-source mapping, image paths.
 - `src/lib/cache.js` — IndexedDB copies of the last tree and of blobs (by sha) for offline use.
 - `src/lib/storage.js` — localStorage/sessionStorage: token, repo, cached user, theme, local changes, open folder/note.
 - `src/hooks/` — `useAuth` (token/user/repo), `useRepo` (remote tree, local changes, sync), `useTheme`. `App.jsx` is layout and UI actions.

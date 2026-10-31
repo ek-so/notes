@@ -1,35 +1,32 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { flushSync } from 'react-dom'
 import { getBlob, getBlobBase64 } from '../lib/github.js'
-import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { renderBlocks, tapOffset, resolveImage } from '../lib/markdown.js'
 import { Hash, PaintBrush } from '@phosphor-icons/react'
 import Header from './Header.jsx'
 import { cn } from '@/lib/utils.js'
-
-marked.setOptions({ breaks: true, gfm: true })
 
 const MIME = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
   webp: 'image/webp', svg: 'image/svg+xml', avif: 'image/avif', bmp: 'image/bmp',
 }
 
-// Repo path for a relative image src in the note at `notePath`, or null for
-// external URLs.
-function resolveImage(notePath, src) {
-  if (!src || /^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(src)) return null
-  let rel
-  try { rel = decodeURI(src.split(/[?#]/)[0]) } catch { return null }
-  const parts = rel.startsWith('/') ? [] : notePath.split('/').slice(0, -1)
-  for (const seg of rel.split('/')) {
-    if (!seg || seg === '.') continue
-    if (seg === '..') parts.pop()
-    else parts.push(seg)
-  }
-  return parts.join('/')
-}
-
 // GitHub's version of a note; '' for one created on this device
 const fetchOriginal = sha => sha === null ? Promise.resolve('') : getBlob(sha)
+
+const DOUBLE_TAP_MS = 350
+const DOUBLE_TAP_PX = 30
+
+// Text node and offset under a screen point
+function caretAt(x, y) {
+  if (document.caretRangeFromPoint) {
+    const r = document.caretRangeFromPoint(x, y)
+    return r && { node: r.startContainer, offset: r.startOffset }
+  }
+  const p = document.caretPositionFromPoint?.(x, y)
+  return p && { node: p.offsetNode, offset: p.offset }
+}
 
 export default function Editor({ path, entry, files, edited, onEdit, onClose, onHome }) {
   const [content, setContent] = useState('')
@@ -41,13 +38,15 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
   const originalRef = useRef(null)
   const pendingRef = useRef(null)
   const onEditRef = useRef(onEdit)
+  const lastTapRef = useRef(null)
+  const caretRef = useRef(null) // cursor position to set when switching to edit
 
   useEffect(() => { onEditRef.current = onEdit }, [onEdit])
 
   useEffect(() => { load() }, [path])
 
   useEffect(() => {
-    if (mode === 'edit') textareaRef.current?.focus()
+    if (mode === 'edit' && caretRef.current === null) textareaRef.current?.focus()
   }, [mode])
 
   // Report edits after a pause, and flush on close
@@ -100,6 +99,40 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
     setLoading(false)
   }
 
+  // Markdown offset for a tap in the preview: the tapped block, at the tapped word
+  function sourceOffsetAt(x, y, target) {
+    const block = target.closest('[data-src]')
+    if (!block) return content.length
+    const start = Number(block.dataset.src)
+    const raw = content.slice(start, start + Number(block.dataset.len))
+    const caret = caretAt(x, y)
+    if (!caret || !block.contains(caret.node)) return start
+    const before = document.createRange()
+    before.setStart(block, 0)
+    before.setEnd(caret.node, caret.offset)
+    const textAfter = caret.node.nodeType === Node.TEXT_NODE ? caret.node.textContent.slice(caret.offset) : ''
+    return start + tapOffset(raw, before.toString(), textAfter)
+  }
+
+  // Double-tap in preview switches to markdown with the cursor at that spot.
+  // Focus happens inside the tap so mobile keyboards open.
+  function handlePreviewClick(e) {
+    if (e.target.closest('a, img')) return
+    const last = lastTapRef.current
+    lastTapRef.current = { time: e.timeStamp, x: e.clientX, y: e.clientY }
+    if (!last || e.timeStamp - last.time > DOUBLE_TAP_MS
+      || Math.hypot(e.clientX - last.x, e.clientY - last.y) > DOUBLE_TAP_PX) return
+    lastTapRef.current = null
+    const pos = sourceOffsetAt(e.clientX, e.clientY, e.target)
+    caretRef.current = pos
+    flushSync(() => setMode('edit'))
+    caretRef.current = null
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.setSelectionRange(pos, pos)
+    textarea.focus()
+  }
+
   function handleChange(value) {
     pendingRef.current = value
     setContent(value)
@@ -111,7 +144,7 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
   const [preview, imagePaths] = useMemo(() => {
     if (mode !== 'preview') return ['', []]
     const tpl = document.createElement('template')
-    tpl.innerHTML = DOMPurify.sanitize(marked.parse(content))
+    tpl.innerHTML = DOMPurify.sanitize(renderBlocks(content))
     const paths = []
     for (const img of tpl.content.querySelectorAll('img')) {
       const repoPath = resolveImage(path, img.getAttribute('src'))
@@ -188,8 +221,9 @@ export default function Editor({ path, entry, files, edited, onEdit, onClose, on
         />
       ) : (
         <div
-          className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
+          className="editor-preview flex-1 px-5 py-4 overflow-y-auto text-base leading-relaxed touch-manipulation [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
           style={{ WebkitOverflowScrolling: 'touch' }}
+          onClick={handlePreviewClick}
           dangerouslySetInnerHTML={{ __html: preview || '<p class="text-muted-foreground italic">Nothing to preview yet.</p>' }}
         />
       )}
