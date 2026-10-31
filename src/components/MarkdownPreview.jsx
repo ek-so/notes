@@ -13,6 +13,36 @@ function caretAt(x, y) {
   return p && { node: p.offsetNode, offset: p.offset }
 }
 
+const LONG_WORD = /\S{16,}/g
+const BREAK_EVERY = 8
+
+// Long unbroken words (tokens, URLs) in table cells get <wbr> break points,
+// so tables fit the screen without splitting short words. <wbr> adds no
+// characters, so copied text stays intact.
+function breakLongWords(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes = []
+  while (walker.nextNode()) {
+    if (walker.currentNode.parentElement.closest('td, th') && LONG_WORD.test(walker.currentNode.data)) nodes.push(walker.currentNode)
+    LONG_WORD.lastIndex = 0
+  }
+  for (const node of nodes) {
+    const parts = node.data.split(/(\S{16,})/)
+    const frag = document.createDocumentFragment()
+    for (const part of parts) {
+      if (!/^\S{16,}$/.test(part)) {
+        if (part) frag.append(part)
+        continue
+      }
+      for (let i = 0; i < part.length; i += BREAK_EVERY) {
+        if (i) frag.append(document.createElement('wbr'))
+        frag.append(part.slice(i, i + BREAK_EVERY))
+      }
+    }
+    node.replaceWith(frag)
+  }
+}
+
 const repoImages = (html, notePath) => {
   const tpl = document.createElement('template')
   tpl.innerHTML = html
@@ -30,6 +60,7 @@ export default function MarkdownPreview({ content, path, files, scrollTo, onTap,
 
   const [html, imagePaths] = useMemo(() => {
     const [tpl, imgs] = repoImages(DOMPurify.sanitize(renderBlocks(content)), path)
+    breakLongWords(tpl.content)
     return [tpl.innerHTML, imgs.map(([, repoPath]) => repoPath)]
   }, [content, path])
 

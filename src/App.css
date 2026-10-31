@@ -14,7 +14,6 @@
 .editor-preview strong { font-weight: 600; }
 .editor-preview em { font-style: italic; }
 .editor-preview table { width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 14px; }
-/* Tables fit the screen: cells wrap at words; only links and code may break anywhere */
-.editor-preview th, .editor-preview td { padding: 6px 8px; border: 1px solid var(--border); text-align: left; vertical-align: top; overflow-wrap: break-word; }
-.editor-preview td a, .editor-preview td code { overflow-wrap: anywhere; }
+/* Tables fit the screen: cells wrap at words; long words get <wbr> break points (MarkdownPreview) */
+.editor-preview th, .editor-preview td { padding: 6px 8px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
 .editor-preview th { background: var(--secondary); font-weight: 600; }
