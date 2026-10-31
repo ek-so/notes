@@ -30,7 +30,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
           value={theme}
           onValueChange={onTheme}
           aria-label="Theme"
-          className="flex h-11 gap-1 rounded-lg bg-segment p-1 mx-1 my-1"
+          className="flex h-10 gap-1 rounded-lg bg-segment p-1 mx-1 my-1"
         >
           {THEMES.map(([value, label, Icon]) => (
             <DropdownMenuRadioItem
@@ -39,7 +39,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
               aria-label={label}
               onSelect={e => { e.preventDefault(); onTheme(value) }}
               className={cn(
-                'flex h-9 flex-1 items-center justify-center rounded-sm transition-colors [&_svg]:size-4',
+                'flex h-8 flex-1 items-center justify-center rounded-sm transition-colors [&_svg]:size-4',
                 'data-[highlighted]:ring-1 data-[highlighted]:ring-ring',
                 theme === value ? 'bg-segment-active text-foreground shadow-sm' : 'text-muted-foreground'
               )}

@@ -57,7 +57,7 @@ export default function SearchSheet({ onClose, onSelect, virtual, changes, recen
                 return (
                   <li key={path}>
                     <button
-                      className="w-full flex items-center gap-3 px-6 py-2.5 hover:bg-secondary text-left min-h-11"
+                      className="w-full flex items-center gap-3 px-6 py-2.5 hover:bg-secondary text-left min-h-10"
                       onClick={() => select(path)}
                     >
                       <span className="text-lg shrink-0">{icon}</span>
