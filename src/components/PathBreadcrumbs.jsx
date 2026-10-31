@@ -21,7 +21,7 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
         <BreadcrumbList className="flex-nowrap text-base">
           {crumbs.map((crumb, i) => (
             <Fragment key={crumb.path}>
-              {i > 0 && <BreadcrumbSeparator />}
+              {i > 1 && <BreadcrumbSeparator />}
               <BreadcrumbItem>
                 {i === crumbs.length - 1 ? (
                   <BreadcrumbPage>
