@@ -10,6 +10,7 @@ import MarkdownPreview from './MarkdownPreview.jsx'
 import MarkdownEditor from './MarkdownEditor.jsx'
 import { useNote } from '../hooks/useNote.js'
 import { displayName } from '../lib/files.js'
+import PageLayout from './PageLayout.jsx'
 
 // A note: shown as preview; tapping text edits its markdown there. Edits
 // save on their own; ✓ / Done only switches back to preview.
@@ -37,7 +38,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
   const ready = !loading && !loadError
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <PageLayout>
       <Header
         start={
           <div className="flex-1 min-w-0">
@@ -72,6 +73,6 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onNav
           <MarkdownPreview content={content} path={path} files={files} scrollTo={editedAt} onTap={startEditing} onOpenFile={onOpenFile} onNavigate={onNavigate} />
         )}
       </div>
-    </div>
+    </PageLayout>
   )
 }

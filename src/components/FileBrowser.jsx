@@ -43,6 +43,7 @@ function useFileEmojis(items) {
   return emojis
 }
 import Spinner from './Spinner.jsx'
+import PageLayout from './PageLayout.jsx'
 import { cn } from '@/lib/utils.js'
 
 export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repoName, onRename, onDelete, onMove, folders, menu, syncButton, onSearch }) {
@@ -60,7 +61,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
   const currentFolder = path ? path.split('/').pop() : repoName
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <PageLayout>
       <Header
         start={
           path ? (
@@ -174,6 +175,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         )}
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }
