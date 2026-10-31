@@ -1,14 +1,20 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet.jsx'
+import { useKeyboardInset } from '../hooks/useKeyboardInset.js'
 
 // Bottom sheet dialog used for every prompt in the app. Rendered while
-// open; closing (backdrop, Escape, ✕) calls onClose.
+// open; closing (backdrop, Escape, ✕) calls onClose. Sits above the
+// on-screen keyboard when one is open.
 export default function BottomSheet({ title, description, onClose, onOpenAutoFocus, children }) {
+  const keyboard = useKeyboardInset()
   return (
     <Sheet open onOpenChange={open => !open && onClose()}>
       <SheetContent
         side="bottom"
         className="mx-auto w-full max-w-[680px] gap-4 rounded-t-2xl bg-card p-6"
-        style={{ paddingBottom: 'calc(1.5rem + var(--safe-bottom))' }}
+        style={{
+          bottom: keyboard,
+          paddingBottom: keyboard ? '1.5rem' : 'calc(1.5rem + var(--safe-bottom))',
+        }}
         {...(description ? {} : { 'aria-describedby': undefined })}
         onOpenAutoFocus={onOpenAutoFocus}
       >
