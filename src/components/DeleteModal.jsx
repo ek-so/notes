@@ -11,9 +11,9 @@ export default function DeleteModal({ item, onDelete, onClose }) {
       description={`${isDir ? 'Everything inside it will be deleted too. ' : ''}It's removed from GitHub when you sync.`}
       onClose={onClose}
     >
-      <div className="flex gap-2">
-        <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
-        <Button variant="destructive" className="flex-1" onClick={onDelete}>Delete</Button>
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button variant="destructive" onClick={onDelete}>Delete</Button>
       </div>
     </BottomSheet>
   )

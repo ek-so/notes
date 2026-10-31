@@ -37,7 +37,7 @@ export default function AccountMenu({ repo, theme, onTheme, onSettings, onSignOu
               key={value}
               value={value}
               aria-label={label}
-              onSelect={e => e.preventDefault()}
+              onSelect={e => { e.preventDefault(); onTheme(value) }}
               className={cn(
                 'flex h-9 flex-1 items-center justify-center rounded-sm transition-colors [&_svg]:size-4',
                 'data-[highlighted]:ring-1 data-[highlighted]:ring-ring',

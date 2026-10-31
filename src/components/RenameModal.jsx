@@ -37,9 +37,9 @@ export default function RenameModal({ item, onRename, onClose }) {
           {ext && <span className="text-muted-foreground shrink-0">{ext}</span>}
         </div>
         {error && <p className="text-destructive text-xs">{error}</p>}
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={!name.trim()} className="flex-1">Save</Button>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={!name.trim()}>Save</Button>
         </div>
       </form>
     </BottomSheet>

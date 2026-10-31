@@ -1,11 +1,40 @@
+import { useEffect, useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet.jsx'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog.jsx'
 import { useKeyboardInset } from '../hooks/useKeyboardInset.js'
 
-// Bottom sheet dialog used for every prompt in the app. Rendered while
-// open; closing (backdrop, Escape, ✕) calls onClose. Sits above the
-// on-screen keyboard when one is open.
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const handler = e => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isDesktop
+}
+
 export default function BottomSheet({ title, description, onClose, onOpenAutoFocus, children }) {
+  const isDesktop = useIsDesktop()
   const keyboard = useKeyboardInset()
+
+  if (isDesktop) {
+    return (
+      <Dialog open onOpenChange={open => !open && onClose()}>
+        <DialogContent
+          onOpenAutoFocus={onOpenAutoFocus}
+          {...(description ? {} : { 'aria-describedby': undefined })}
+        >
+          <DialogHeader className="pr-8">
+            <DialogTitle>{title}</DialogTitle>
+            {description && <DialogDescription>{description}</DialogDescription>}
+          </DialogHeader>
+          {children}
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <Sheet open onOpenChange={open => !open && onClose()}>
       <SheetContent

@@ -31,9 +31,9 @@ export default function NewFileModal({ folder, kind, onCreate, onClose }) {
           className="bg-background border-border"
         />
         {error && <p className="text-destructive text-xs">{error}</p>}
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={!name.trim()} className="flex-1">Create</Button>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={!name.trim()}>Create</Button>
         </div>
       </form>
     </BottomSheet>
