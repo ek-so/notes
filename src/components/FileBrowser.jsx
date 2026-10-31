@@ -1,18 +1,14 @@
-import { useState } from 'react'
-import { Plus, FileText, Folder, PencilSimple, Trash, DotsThree } from '@phosphor-icons/react'
+import { Plus, FileText, Folder } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu.jsx'
 import Header from './Header.jsx'
 import PathBreadcrumbs from './PathBreadcrumbs.jsx'
-import RenameModal from './RenameModal.jsx'
-import DeleteModal from './DeleteModal.jsx'
+import ItemMenu from './ItemMenu.jsx'
 import { splitName } from '../lib/changes.js'
 import { isImage } from '../lib/files.js'
 import Spinner from './Spinner.jsx'
 
 export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repo, onRename, onDelete, menu }) {
-  const [renameItem, setRenameItem] = useState(null)
-  const [deleteItem, setDeleteItem] = useState(null)
   const items = loading ? [] : listDir(path)
 
   function navigate(item) {
@@ -34,6 +30,9 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
         start={menu}
         onBack={path ? goBack : undefined}
       >
+        {path && (
+          <ItemMenu item={{ name: currentFolder, path, type: 'dir' }} onRename={onRename} onDelete={onDelete} />
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" aria-label="New" className="shrink-0">
@@ -82,18 +81,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
                         {item.changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
                       </span>
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="More actions"
-                          className="shrink-0 text-muted-foreground"><DotsThree /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
-                        <DropdownMenuItem onSelect={() => setRenameItem(item)}><PencilSimple /> Rename</DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" onSelect={() => setDeleteItem(item)}>
-                          <Trash /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ItemMenu item={item} onRename={onRename} onDelete={onDelete} />
                   </div>
                 </li>
               )
@@ -101,26 +89,6 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
           </ul>
         )}
       </div>
-
-      {renameItem && (
-        <RenameModal
-          item={renameItem}
-          onRename={name => {
-            const err = onRename(renameItem, name)
-            if (!err) setRenameItem(null)
-            return err
-          }}
-          onClose={() => setRenameItem(null)}
-        />
-      )}
-
-      {deleteItem && (
-        <DeleteModal
-          item={deleteItem}
-          onDelete={() => { onDelete(deleteItem); setDeleteItem(null) }}
-          onClose={() => setDeleteItem(null)}
-        />
-      )}
     </div>
   )
 }

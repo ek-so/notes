@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { Check } from '@phosphor-icons/react'
 import { Button } from './ui/button.jsx'
 import Header from './Header.jsx'
+import ItemMenu from './ItemMenu.jsx'
 import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 import Spinner from './Spinner.jsx'
 import MarkdownPreview from './MarkdownPreview.jsx'
@@ -12,7 +13,7 @@ import { displayName } from '../lib/files.js'
 
 // A note: shown as preview; tapping text edits its markdown there. Edits
 // save on their own; ✓ / Done only switches back to preview.
-export default function Editor({ path, root, entry, files, edited, onEdit, onClose, onNavigate }) {
+export default function Editor({ path, root, entry, files, edited, onEdit, onClose, onNavigate, onRename, onDelete }) {
   const { content, change, loading, loadError } = useNote(entry, edited, onEdit)
   const [mode, setMode] = useState('preview')
   const [editedAt, setEditedAt] = useState(null) // offset to show when back in preview
@@ -39,6 +40,7 @@ export default function Editor({ path, root, entry, files, edited, onEdit, onClo
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <Header title={fileName} changed={ready && edited !== undefined} onBack={onClose}>
+        <ItemMenu item={{ name: path.split('/').pop(), path, type: 'file' }} onRename={onRename} onDelete={onDelete} />
         {mode === 'edit' && (
           // For desktop, where there's no keyboard Done
           <Button variant="ghost" size="icon" onClick={finishEditing} aria-label="Done" className="shrink-0">

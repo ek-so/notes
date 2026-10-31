@@ -64,6 +64,7 @@ React + Vite PWA. Reads/writes markdown files from any GitHub repo via the GitHu
 - `src/hooks/` — `useAuth` (token/user/repo), `useRepo` (remote tree, local changes, sync), `useNote` (one note's text, edit tracking), `useRepoImages`, `useTheme`. `App.jsx` is layout and UI actions.
 - Notes: `Editor` switches between `MarkdownPreview` (tap to edit) and `MarkdownEditor` (highlighted textarea).
 - Home header: `AccountMenu` (☰ owner / repo) opens a popover with theme (light/dark/system) and Settings / Sign out. `Settings` is its own page.
+- Rename/Delete for any file or folder go through `ItemMenu` (⋯), on list rows and in the header of the open folder or note.
 - Prompts use `BottomSheet` (shadcn Sheet); loading uses `Spinner`. Pull-to-refresh wraps every screen (`PullToRefresh`); areas marked `data-no-pull` opt out.
 - Offline: a service worker (vite-plugin-pwa) caches the app; all notes are prefetched to IndexedDB. Every change is local until Sync, which makes one commit.
 - App flow: **Auth → RepoSetup → FileBrowser / Editor**

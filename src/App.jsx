@@ -59,11 +59,18 @@ export default function App() {
     })
     if (clash) return 'Sync first: a renamed or deleted item just used this name.'
     update(ch => rename(ch, virtual, item.path, to, item.type === 'dir'))
+    // Stay in the renamed folder / note
+    const follow = p => p && (p === item.path || p.startsWith(item.path + '/')) ? to + p.slice(item.path.length) : p
+    setFolder(follow)
+    setSelectedFile(follow)
     return null
   }
 
   function handleDelete(item) {
-    if (selectedFile === item.path || selectedFile?.startsWith(item.path + '/')) setSelectedFile(null)
+    const inside = p => p === item.path || p?.startsWith(item.path + '/')
+    if (inside(selectedFile)) setSelectedFile(null)
+    // Deleting the open folder (or one above it): go to its parent
+    if (inside(folder)) setFolder(item.path.slice(0, Math.max(item.path.lastIndexOf('/'), 0)))
     update(ch => remove(ch, virtual, item.path, item.type === 'dir'))
   }
 
@@ -128,6 +135,8 @@ export default function App() {
             onClose={() => setSelectedFile(null)}
             root={auth.repo.split('/')[1]}
             onNavigate={p => { setFolder(p); setSelectedFile(null) }}
+            onRename={handleRename}
+            onDelete={handleDelete}
           />
         ) : (
           <FileBrowser
