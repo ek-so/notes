@@ -37,11 +37,15 @@ export default function PathBreadcrumbs({ root, path, current, changed, onNaviga
                   </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <button onClick={() => onNavigate(crumb.path)}>
-                      {i === 0
-                        ? <House className="size-4 shrink-0" />
-                        : <span className="truncate max-w-40">{crumb.name}</span>}
-                    </button>
+                    {i === 0 ? (
+                      <Button variant="ghost-outline" size="icon" className="shrink-0 border-muted-foreground/50" onClick={() => onNavigate(crumb.path)}>
+                        <House />
+                      </Button>
+                    ) : (
+                      <button onClick={() => onNavigate(crumb.path)}>
+                        <span className="truncate max-w-40">{crumb.name}</span>
+                      </button>
+                    )}
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
