@@ -9,7 +9,7 @@ import {
 const PREFETCH_WORKERS = 4
 
 // Download every note not yet on this device, so all of them open offline.
-async function prefetchNotes(files) {
+async function downloadNotes(files) {
   const shas = [...new Set(
     Object.entries(files).filter(([path]) => path.endsWith('.md')).map(([, f]) => f.sha)
   )]
@@ -21,6 +21,28 @@ async function prefetchNotes(files) {
     }
   }
   await Promise.all(Array.from({ length: PREFETCH_WORKERS }, worker))
+}
+
+// One download at a time; a request while one runs is done right after it,
+// with the newest tree.
+let prefetching = false
+let prefetchNext = null
+async function prefetchNotes(files) {
+  if (prefetching) {
+    prefetchNext = files
+    return
+  }
+  prefetching = true
+  try {
+    await downloadNotes(files)
+  } finally {
+    prefetching = false
+  }
+  if (prefetchNext) {
+    const next = prefetchNext
+    prefetchNext = null
+    prefetchNotes(next)
+  }
 }
 
 // Remote tree + local changes for one repo, and syncing between them.

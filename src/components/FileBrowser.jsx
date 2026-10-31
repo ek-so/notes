@@ -6,12 +6,11 @@ import Header from './Header.jsx'
 import PathBreadcrumbs from './PathBreadcrumbs.jsx'
 import RenameModal from './RenameModal.jsx'
 import DeleteModal from './DeleteModal.jsx'
-import { cn } from '@/lib/utils.js'
 import { splitName } from '../lib/changes.js'
+import { isImage } from '../lib/files.js'
+import Spinner from './Spinner.jsx'
 
-const IMAGE = /^\.(png|jpe?g|gif|webp|svg|heic|avif|bmp)$/i
-
-export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, currentPath, onNewFile, repo, onRename, onDelete, onMenu }) {
+export default function FileBrowser({ path, onNavigate, listDir, loading, error, notice, onSelect, onNewFile, repo, onRename, onDelete, onMenu }) {
   const [renameItem, setRenameItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
   const items = loading ? [] : listDir(path)
@@ -52,7 +51,7 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
 
       {loading && (
         <div className="flex justify-center py-12">
-          <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
+          <Spinner />
         </div>
       )}
       {error && <p className="text-destructive text-sm text-center pt-4 px-4">{error}</p>}
@@ -70,22 +69,20 @@ export default function FileBrowser({ path, onNavigate, listDir, loading, error,
             const openable = item.type === 'dir' || ext === '.md'
             return (
               <li key={item.path}>
-                <div className={cn(
-                  'flex items-center pr-2 transition-colors hover:bg-secondary',
-                  currentPath === item.path && 'bg-primary/10'
-                )}>
-                  <button
-                    className="flex-1 min-w-0 flex min-h-11 items-center gap-3 pl-4 text-left disabled:cursor-default"
+                <div className="flex items-center pr-2 transition-colors hover:bg-secondary">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 min-w-0 justify-start gap-3 pl-4 pr-0 rounded-none font-normal text-left hover:bg-transparent disabled:opacity-100 disabled:cursor-default"
                     onClick={() => navigate(item)}
                     disabled={!openable}
                   >
-                    <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : IMAGE.test(ext) ? '🖼️' : '📄'}</span>
+                    <span className="text-lg shrink-0">{item.type === 'dir' ? '📁' : isImage(item.name) ? '🖼️' : '📄'}</span>
                     <span className="flex-1 text-base truncate">
                       {base}
                       {ext && <span className="text-muted-foreground">{ext}</span>}
                       {item.changed && <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" />}
                     </span>
-                  </button>
+                  </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" aria-label="More actions"

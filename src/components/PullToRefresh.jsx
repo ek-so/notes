@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils.js'
+import Spinner from './Spinner.jsx'
 
 // Is the touch inside a scrolled-down area? Then the drag scrolls, not refreshes.
 function scrolledAncestor(el, root) {
@@ -18,9 +19,11 @@ export default function PullToRefresh({ onRefresh, children }) {
   const rootRef = useRef()
 
   function onTouchStart(e) {
-    // Not while typing: dragging then only hides the keyboard
+    // Not while typing, nor inside areas that opt out (the markdown editor):
+    // there a drag scrolls or hides the keyboard
     const typing = document.activeElement?.matches('textarea, input')
-    const blocked = refreshing || typing || scrolledAncestor(e.target, rootRef.current)
+    const optedOut = e.target.closest('[data-no-pull]')
+    const blocked = refreshing || typing || optedOut || scrolledAncestor(e.target, rootRef.current)
     pullStart.current = blocked ? null : e.touches[0].clientY
   }
 
@@ -56,8 +59,9 @@ export default function PullToRefresh({ onRefresh, children }) {
           className="absolute inset-x-0 flex items-center justify-center"
           style={{ top: 'var(--safe-top)', height: offset }}
         >
-          <div
-            className={cn('w-5 h-5 rounded-full border-2 border-border border-t-primary', refreshing && 'animate-spin')}
+          <Spinner
+            spinning={refreshing}
+            className="size-5"
             style={{ transform: refreshing ? undefined : `rotate(${pull * 4}deg)`, opacity: refreshing ? 1 : pull / 60 }}
           />
         </div>

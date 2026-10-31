@@ -1,3 +1,5 @@
+import { displayName } from './files.js'
+
 // Local changes are kept as an overlay on the remote tree, keyed by the
 // file's original (remote) path so edits survive renames:
 //   edits: { origPath: content }
@@ -213,17 +215,16 @@ export function treeEntries(ch, files) {
   return entries
 }
 
-const shortName = p => p.split('/').pop().replace(/\.md$/, '')
 
 export function commitMessage(ch) {
   const lines = Object.keys(ch.base).map(orig => {
     const target = targetOf(ch, orig)
-    if (target === null) return `Delete ${shortName(orig)}`
+    if (target === null) return `Delete ${displayName(orig)}`
     if (ch.base[orig] === null) {
-      return target.endsWith('/.gitkeep') ? `Create folder ${target.slice(0, -9)}` : `Create ${shortName(target)}`
+      return target.endsWith('/.gitkeep') ? `Create folder ${target.slice(0, -9)}` : `Create ${displayName(target)}`
     }
     if (target !== orig) return `Rename ${orig} → ${target}`
-    return `Update ${shortName(orig)}`
+    return `Update ${displayName(orig)}`
   })
   if (lines.length === 1) return lines[0]
   return `Update ${lines.length} files\n\n${lines.map(l => `- ${l}`).join('\n')}`

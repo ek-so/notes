@@ -8,6 +8,7 @@ import PullToRefresh from './components/PullToRefresh.jsx'
 import NewFileModal from './components/NewFileModal.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import BottomSheet from './components/BottomSheet.jsx'
+import Spinner from './components/Spinner.jsx'
 import { Button } from './components/ui/button.jsx'
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from './components/ui/sheet.jsx'
 import { useAuth } from './hooks/useAuth.js'
@@ -98,7 +99,7 @@ export default function App() {
   if (!auth.ready) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
-        <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
+        <Spinner />
       </div>
     )
   }
@@ -137,7 +138,6 @@ export default function App() {
             onDelete={handleDelete}
             onMenu={() => setMenuOpen(true)}
             onSelect={setSelectedFile}
-            currentPath={selectedFile}
             onNewFile={(f, kind) => setNewFile({ folder: f, kind })}
             repo={auth.repo}
           />
